@@ -9,18 +9,18 @@ type BgBottomShape = "flat" | "slant" | "curved" | "wave" | "zigzag" | "ellipse"
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
-// BẢN FIX: Đã tinh chỉnh lại toạ độ layout để chứa đủ nội dung
+// BẢN FIX: Đẩy thẻ nội dung và Footer lên cao hơn để có khoảng thở ở dưới cùng
 const L = {
   bg: "#fcf9f2",
   imageX: 55,
-  imageY: 30, // Đẩy ảnh lên một chút
+  imageY: 30, 
   imageW: 914,
-  imageH: 520, // Giảm nhẹ chiều cao ảnh
+  imageH: 520, 
   imageR: 42,
   cardX: 55,
-  cardY: 570,  // Đẩy thẻ nội dung lên cao hơn (bản cũ 620)
+  cardY: 560,  // Đẩy thẻ lên cao một chút (cũ: 570)
   cardW: 914,
-  cardH: 840,  // Tăng chiều cao thẻ thêm 70px để chống tràn (bản cũ 770)
+  cardH: 820,  // Chiều cao thẻ vừa vặn (cũ: 840)
   cardR: 44,
 };
 
@@ -360,7 +360,8 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1445, color: data.textColor }}>
+      {/* Đã đẩy top lên 1415 để rộng rãi hơn */}
+      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1415, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
         <div className="mt-3 flex items-center gap-6">
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
@@ -456,7 +457,7 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 220);
   }
 
-  let textY = L.cardY + (data.studioName ? 270 : 230);
+  let textY = L.cardY + (data.studioName ? 260 : 220);
   textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, textY, data.themeColor, data.textColor);
   textY += 15; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
@@ -465,11 +466,13 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = data.textColor;
   ctx.font = "700 26px 'Quicksand', sans-serif";
   ctx.fillStyle = data.themeColor;
-  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1465);
+  
+  // Đồng bộ Toạ độ y với bản HTML
+  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1435);
   ctx.fillStyle = data.textColor;
-  ctx.fillText(`${data.address}`, w / 2, 1465);
+  ctx.fillText(`${data.address}`, w / 2, 1435);
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
-  ctx.fillText(line2, w / 2, 1515);
+  ctx.fillText(line2, w / 2, 1485);
 }
 
 function drawCanvasSection(
