@@ -10,10 +10,13 @@ type FitMode = "cover" | "contain";
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
-// Cấu trúc lại toàn bộ Layout để vừa vặn, không bị tràn chữ
+// Cấu trúc Layout mới chuẩn theo mẫu
 const L = {
-  bg: "#f9f4e8",
-  topH: 580, // Chiều cao mảng xanh lá bên trên
+  bg: "#fcf9f2",
+  
+  // Thông số cắt xéo nền xanh
+  topH_left: 640,
+  topH_right: 440, 
 
   imageX: 55,
   imageY: 35,
@@ -22,41 +25,39 @@ const L = {
   imageR: 42,
 
   cardX: 55,
-  cardY: 600, // Đẩy card lên một chút
+  cardY: 610, 
   cardW: 914,
-  cardH: 810, // Tăng chiều cao card để chứa đủ 2 list Dịch vụ và Sản phẩm
+  cardH: 780, 
   cardR: 44,
 };
 
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [price, setPrice] = useState("2299k");
-  const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
-  const [studioName, setStudioName] = useState("SON BABY STUDIO");
+  const [price, setPrice] = useState("2199k");
+  const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
+  const [studioName, setStudioName] = useState(""); // Ẩn bớt nếu gói newborn không có dòng thứ 3
 
   const [serviceItems, setServiceItems] = useState([
-    "Chụp tại Phim trường Son Studio",
-    "3 Bối cảnh chụp",
-    "Hỗ trợ 2 trang phục cho bé yêu và ba mẹ",
-    "Hỗ trợ chụp cùng ba mẹ",
+    "Chụp ngay tại nhà",
+    "2 Bối cảnh",
+    "Hỗ trợ toàn bộ trang phục và concept",
   ]);
 
   const [productItems, setProductItems] = useState([
-    "11 ảnh chỉnh sửa hoàn thiện",
-    "10 ảnh in lụa 13x18cm",
-    "1 Ảnh gỗ 40x60cm",
-    "Trả toàn bộ ảnh chụp và ảnh chỉnh sửa full size",
-    "Album đựng ảnh 13x18",
+    "11 Ảnh chỉnh sửa hoàn thiện",
+    "10 Ảnh in lụa size 13x18",
+    "1 Ảnh ép gỗ khung size 40x60",
+    "Trả toàn bộ file ảnh gốc Fullsize",
   ]);
 
   const [address, setAddress] = useState("43 Quang Trung, Eakar (Đường 720)");
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
-  const [themeColor, setThemeColor] = useState("#57903f");
-  const [borderColor, setBorderColor] = useState("#57903f");
-  const [textColor, setTextColor] = useState("#6a3f25");
-  const [cardColor, setCardColor] = useState("#fffaf0");
+  const [themeColor, setThemeColor] = useState("#628b55"); // Màu xanh lá giống mẫu
+  const [borderColor, setBorderColor] = useState("#628b55");
+  const [textColor, setTextColor] = useState("#628b55"); // Chữ cũng màu xanh
+  const [cardColor, setCardColor] = useState("#fcf9f2"); // Màu nền card tiệp màu nền bg
 
   const [imageFit, setImageFit] = useState<FitMode>("cover");
   const [imageX, setImageX] = useState(50);
@@ -78,12 +79,10 @@ export default function PosterEditorTool() {
 
   const applyPreset = (type: string) => {
     const presets: Record<string, string[]> = {
-      babyGreen: ["#57903f", "#57903f", "#6a3f25", "#fffaf0"],
+      newbornGreen: ["#628b55", "#628b55", "#628b55", "#fcf9f2"],
       luxuryGold: ["#0f172a", "#d4af37", "#5b4636", "#fff7e6"],
       softPink: ["#d97b93", "#c75f7a", "#7a3f4d", "#fff5f7"],
-      warmBrown: ["#8b5e3c", "#c89f68", "#5c3b24", "#fff7ed"],
       minimalBlack: ["#111111", "#888888", "#333333", "#ffffff"],
-      saleRed: ["#ef4444", "#111111", "#5a2a2a", "#fff7f0"],
     };
 
     const p = presets[type];
@@ -131,6 +130,9 @@ export default function PosterEditorTool() {
   };
 
   const downloadPNG = async () => {
+    // Đợi font load xong trước khi vẽ lên canvas để không bị lỗi font
+    await document.fonts.ready;
+
     const canvas = document.createElement("canvas");
     canvas.width = POSTER_W * 2;
     canvas.height = POSTER_H * 2;
@@ -142,19 +144,26 @@ export default function PosterEditorTool() {
     await drawPosterCanvas(ctx, data);
 
     const link = document.createElement("a");
-    link.download = `poster-${Date.now()}.png`;
+    link.download = `poster-sonstudio-${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   };
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-3 md:p-8">
+    <main className="min-h-screen bg-zinc-100 p-3 md:p-8 font-quicksand">
+      {/* Nạp Font Google để hiển thị chuẩn xác */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&display=swap');
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+        .font-quicksand { font-family: 'Quicksand', sans-serif; }
+      `}} />
+
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5">
-          <h1 className="text-2xl font-bold text-zinc-900">Poster Editor</h1>
-          <p className="mt-1 text-sm text-zinc-500">Upload ảnh, chỉnh màu, nội dung, căn ảnh rồi xuất PNG.</p>
+          <h1 className="text-2xl font-bold text-zinc-900 font-quicksand">Poster Editor</h1>
+          <p className="mt-1 text-sm text-zinc-500">Upload ảnh, chỉnh font chữ không lỗi, căn ảnh rồi xuất PNG.</p>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 space-y-4 font-quicksand">
             <label className="block">
               <span className="text-sm font-medium">Ảnh chính</span>
               <div className="mt-2 flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 p-5 hover:bg-zinc-50">
@@ -171,18 +180,16 @@ export default function PosterEditorTool() {
                 <Palette className="h-4 w-4" /> Màu & style
               </h3>
 
-              <label className="block text-sm font-medium">Preset màu nhanh</label>
+              <label className="block text-sm font-medium">Preset màu</label>
               <select
                 onChange={(e) => applyPreset(e.target.value)}
-                defaultValue="babyGreen"
-                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
+                defaultValue="newbornGreen"
+                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:ring-2"
               >
-                <option value="babyGreen">Baby Green</option>
+                <option value="newbornGreen">Newborn Green</option>
                 <option value="luxuryGold">Luxury Gold</option>
                 <option value="softPink">Soft Pink</option>
-                <option value="warmBrown">Warm Brown</option>
                 <option value="minimalBlack">Minimal Black</option>
-                <option value="saleRed">Sale Red</option>
               </select>
 
               <div className="mt-3 grid grid-cols-2 gap-3">
@@ -195,11 +202,10 @@ export default function PosterEditorTool() {
 
             <div className="rounded-xl border border-zinc-200 p-3">
               <h3 className="mb-3 font-semibold">Căn ảnh upload</h3>
-              <label className="block text-sm font-medium">Kiểu hiển thị ảnh</label>
               <select
                 value={imageFit}
                 onChange={(e) => setImageFit(e.target.value as FitMode)}
-                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none"
               >
                 <option value="cover">Fill khung đẹp nhất, không méo ảnh</option>
                 <option value="contain">Giữ nguyên ảnh, không crop</option>
@@ -215,7 +221,7 @@ export default function PosterEditorTool() {
 
             <Input label="Giá" value={price} onChange={setPrice} />
             <Input label="Tên gói" value={packageTitle} onChange={setPackageTitle} />
-            <Input label="Tên studio" value={studioName} onChange={setStudioName} />
+            <Input label="Tên studio (để trống nếu ẩn)" value={studioName} onChange={setStudioName} />
 
             <EditableList title="Nội dung Dịch vụ" items={serviceItems} setItems={setServiceItems} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />
             <EditableList title="Nội dung Sản phẩm" items={productItems} setItems={setProductItems} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />
@@ -229,14 +235,14 @@ export default function PosterEditorTool() {
               className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-sm"
               style={{ backgroundColor: themeColor }}
             >
-              <Download className="h-5 w-5" /> Xuất PNG
+              <Download className="h-5 w-5" /> Xuất PNG HD
             </button>
           </div>
         </section>
 
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4">
           <div className="mb-3 text-sm text-zinc-500">
-            Preview tỷ lệ 2:3 giống mẫu. File xuất không méo ảnh.
+            Preview tỷ lệ 2:3 giống mẫu. Trữ không đè nhau.
           </div>
 
           <div
@@ -293,12 +299,20 @@ function PosterPreview(data: PosterData) {
     : {};
 
   return (
-    <div className="relative h-[1536px] w-[1024px] overflow-hidden bg-[#f9f4e8]">
-      <div className="absolute inset-x-0 top-0 h-[580px]" style={{ backgroundColor: data.themeColor }} />
-      <div className="absolute -left-[145px] top-[530px] h-[180px] w-[560px] rotate-[-18deg] bg-[#f9f4e8]" />
+    <div className="relative h-[1536px] w-[1024px] overflow-hidden font-quicksand" style={{ backgroundColor: L.bg }}>
+      {/* Nền xanh cắt xéo góc giống mẫu mới */}
+      <div 
+        className="absolute inset-x-0 top-0" 
+        style={{ 
+          backgroundColor: data.themeColor,
+          height: L.topH_left,
+          clipPath: `polygon(0 0, 100% 0, 100% ${L.topH_right}px, 0 100%)`
+        }} 
+      />
 
+      {/* Ảnh chính */}
       <div
-        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-sm"
+        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-md"
         style={{
           left: L.imageX,
           top: L.imageY,
@@ -314,8 +328,9 @@ function PosterPreview(data: PosterData) {
         )}
       </div>
 
+      {/* Khung Card */}
       <div
-        className="absolute z-10 overflow-hidden rounded-[44px] border-[6px] shadow-sm"
+        className="absolute z-10 overflow-hidden rounded-[44px] border-[5px] shadow-sm"
         style={{
           left: L.cardX,
           top: L.cardY,
@@ -325,36 +340,39 @@ function PosterPreview(data: PosterData) {
           backgroundColor: data.cardColor,
         }}
       >
-        <div className="flex h-full flex-col px-[64px] py-[50px]">
+        <div className="flex h-full flex-col px-[64px] py-[40px]">
           <div className="text-center">
-            <div className="text-[72px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
-            <div className="mt-2 text-[46px] font-black leading-tight" style={{ color: data.themeColor }}>{data.packageTitle}</div>
-            <div className="mt-4 text-[28px] font-black uppercase tracking-wide" style={{ color: data.themeColor }}>{data.studioName}</div>
+            <div className="text-[80px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
+            <div className="mt-2 text-[52px] font-black leading-tight uppercase" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+            {data.studioName && (
+              <div className="mt-2 text-[26px] font-bold uppercase tracking-widest" style={{ color: data.themeColor }}>{data.studioName}</div>
+            )}
           </div>
 
-          <div className="mt-10 flex flex-col gap-6">
+          <div className="mt-8 flex flex-col gap-6">
             <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
-            <PosterSection title="Sản phẩm" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
+            <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
           </div>
         </div>
       </div>
 
+      {/* Footer */}
       <div
-        className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-medium leading-snug"
-        style={{ top: 1445, color: data.themeColor }}
+        className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-semibold leading-snug"
+        style={{ top: 1425, color: data.textColor }}
       >
-        <div className="flex items-center gap-2">
-          <MapPin className="h-6 w-6" strokeWidth={2.5} />
+        <div className="flex items-center gap-3">
+          <MapPin className="h-7 w-7" strokeWidth={3} style={{ color: data.themeColor }} />
           <span>{data.address}</span>
         </div>
-        <div className="mt-3 flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Facebook className="h-6 w-6" strokeWidth={2.5} />
+        <div className="mt-3 flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <Facebook className="h-7 w-7" strokeWidth={3} style={{ color: data.themeColor }} />
             <span>{data.facebook}</span>
           </div>
-          <div className="text-zinc-400">|</div>
-          <div className="flex items-center gap-2">
-            <Phone className="h-6 w-6" strokeWidth={2.5} />
+          <div className="text-zinc-400 font-light px-2">|</div>
+          <div className="flex items-center gap-3">
+            <Phone className="h-7 w-7" strokeWidth={3} style={{ color: data.themeColor }} />
             <span>{data.phone}</span>
           </div>
         </div>
@@ -366,21 +384,19 @@ function PosterPreview(data: PosterData) {
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   ctx.clearRect(0, 0, POSTER_W, POSTER_H);
 
-  // Background
+  // Vẽ Background cơ bản
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, POSTER_W, POSTER_H);
 
-  // Top header color
+  // Vẽ đa giác nền cắt xéo
   ctx.fillStyle = data.themeColor;
-  ctx.fillRect(0, 0, POSTER_W, L.topH);
-
-  // Slant line
-  ctx.save();
-  ctx.translate(-145, 530);
-  ctx.rotate((-18 * Math.PI) / 180);
-  ctx.fillStyle = L.bg;
-  ctx.fillRect(0, 0, 560, 180);
-  ctx.restore();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(POSTER_W, 0);
+  ctx.lineTo(POSTER_W, L.topH_right);
+  ctx.lineTo(0, L.topH_left);
+  ctx.closePath();
+  ctx.fill();
 
   // Draw main image
   ctx.save();
@@ -399,45 +415,54 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     }
   } else {
     ctx.fillStyle = "#9ca3af";
-    ctx.font = "400 18px Arial, sans-serif";
+    ctx.font = "400 18px 'Quicksand', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("Upload ảnh chính", POSTER_W / 2, 310);
   }
-
   ctx.restore();
 
-  // Draw card
+  // Draw card box
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   ctx.fillStyle = data.cardColor;
   ctx.fill();
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 5;
   ctx.strokeStyle = data.borderColor;
   ctx.stroke();
 
-  // Draw card content (Synced perfectly with HTML preview math)
+  // Nội dung Card Canvas
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
 
-  ctx.font = "900 72px Arial, sans-serif";
-  ctx.fillText(data.price, POSTER_W / 2, L.cardY + 110);
+  ctx.font = "900 80px 'Quicksand', sans-serif";
+  ctx.fillText(data.price, POSTER_W / 2, L.cardY + 115);
 
-  ctx.font = "900 46px Arial, sans-serif";
-  ctx.fillText(data.packageTitle, POSTER_W / 2, L.cardY + 175);
+  ctx.font = "900 52px 'Quicksand', sans-serif";
+  ctx.fillText(data.packageTitle.toUpperCase(), POSTER_W / 2, L.cardY + 185);
 
-  ctx.font = "900 28px Arial, sans-serif";
-  ctx.fillText(data.studioName.toUpperCase(), POSTER_W / 2, L.cardY + 230);
+  if (data.studioName) {
+    ctx.font = "800 26px 'Quicksand', sans-serif";
+    ctx.fillText(data.studioName.toUpperCase(), POSTER_W / 2, L.cardY + 235);
+  }
 
-  let y = L.cardY + 310;
-  y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 70, y, data.themeColor, data.textColor);
-  y += 35;
-  drawCanvasSection(ctx, "Sản phẩm", data.productItems, L.cardX + 70, y, data.themeColor, data.textColor);
+  // Khởi tạo toạ độ y chuẩn
+  let y = L.cardY + (data.studioName ? 300 : 260);
+  y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, y, data.themeColor, data.textColor);
+  y += 20; 
+  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, y, data.themeColor, data.textColor);
 
-  // Draw Footer
+  // Footer Canvas
   ctx.textAlign = "center";
+  ctx.fillStyle = data.textColor;
+  ctx.font = "600 26px 'Quicksand', sans-serif";
+  
+  // Dùng text thay thế icon trong canvas
   ctx.fillStyle = data.themeColor;
-  ctx.font = "500 26px Arial, sans-serif";
-  ctx.fillText(`📍  ${data.address}`, POSTER_W / 2, 1470);
-  ctx.fillText(`f   ${data.facebook}    |    ☎   ${data.phone}`, POSTER_W / 2, 1515);
+  ctx.fillText(`📍`, POSTER_W / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1450);
+  ctx.fillStyle = data.textColor;
+  ctx.fillText(`${data.address}`, POSTER_W / 2, 1450);
+  
+  const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
+  ctx.fillText(line2, POSTER_W / 2, 1500);
 }
 
 function drawCanvasSection(
@@ -451,24 +476,27 @@ function drawCanvasSection(
 ) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  ctx.font = "900 36px Arial, sans-serif";
+  // Sủ dụng font chữ mềm mại (Cursive) cho tiêu đề giống mẫu
+  ctx.font = "700 54px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
 
-  y += 40;
-  ctx.font = "800 26px Arial, sans-serif";
+  y += 45;
+  ctx.font = "600 28px 'Quicksand', sans-serif";
 
   for (const item of items) {
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
 
     ctx.fillStyle = textColor;
-    y = wrapText(ctx, item, x + 35, y, 750, 34);
-    y += 8;
+    // BẢN FIX QUAN TRỌNG: Gán y bằng giá trị trả về của wrapText để chống đè chữ
+    y = wrapText(ctx, item, x + 30, y, 760, 42);
+    y += 8; // Khoảng cách giãn giữa các gạch đầu dòng
   }
 
   return y;
 }
 
+// BẢN FIX: Hàm ngắt dòng đã cộng dồn lineHeight khi trả về Y để dòng sau không bị trùng
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -492,7 +520,8 @@ function wrapText(
   }
 
   ctx.fillText(line.trim(), x, y);
-  return y;
+  // Trả về toạ độ y của dòng TIẾP THEO (chính là mấu chốt chống lỗi đè font)
+  return y + lineHeight; 
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -596,8 +625,8 @@ function PosterSection({
 }) {
   return (
     <div className="text-left">
-      <h2 className="text-[36px] font-black leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-3 space-y-2 text-[26px] font-extrabold leading-snug" style={{ color: textColor }}>
+      <h2 className="text-[54px] font-cursive leading-tight" style={{ color }}>{title}</h2>
+      <ul className="mt-2 space-y-2 text-[28px] font-semibold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span>
@@ -707,7 +736,7 @@ function EditableList({
         <h3 className="font-semibold">{title}</h3>
         <button
           onClick={() => addItem(setItems)}
-          className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-1 text-sm hover:bg-zinc-200"
+          className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-1 text-sm hover:bg-zinc-200 transition"
         >
           <Plus className="h-4 w-4" /> Thêm dòng
         </button>
@@ -724,7 +753,7 @@ function EditableList({
             />
             <button
               onClick={() => removeItem(items, setItems, idx)}
-              className="rounded-lg border border-zinc-300 px-2 hover:bg-zinc-100"
+              className="rounded-lg border border-zinc-300 px-2 hover:bg-zinc-100 text-red-500"
               title="Xóa dòng"
             >
               <Trash2 className="h-4 w-4" />
