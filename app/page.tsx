@@ -4,12 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone, ZoomIn, ZoomOut, Move, RotateCcw } from "lucide-react";
 
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
-type BgBottomShape = "flat" | "slant" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
+type BgBottomShape = "flat" | "slant-up" | "slant-down" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
 
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
-// BẢN FIX: Đẩy thẻ nội dung và Footer lên cao hơn để có khoảng thở ở dưới cùng
 const L = {
   bg: "#fcf9f2",
   imageX: 55,
@@ -18,9 +17,9 @@ const L = {
   imageH: 520, 
   imageR: 42,
   cardX: 55,
-  cardY: 560,  // Đẩy thẻ lên cao một chút (cũ: 570)
+  cardY: 560,  
   cardW: 914,
-  cardH: 820,  // Chiều cao thẻ vừa vặn (cũ: 840)
+  cardH: 820,  
   cardR: 44,
 };
 
@@ -56,9 +55,10 @@ export default function PosterEditorTool() {
   const [cardColor, setCardColor] = useState("#fcf9f2");
   const [imageBorderColor, setImageBorderColor] = useState("#ffffff");
 
-  const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
-  const [shapeHeight, setShapeHeight] = useState(620); 
-  const [shapeIntensity, setShapeIntensity] = useState(70);
+  // Đổi mặc định sang Xéo xuống giống mẫu
+  const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("slant-down");
+  const [shapeHeight, setShapeHeight] = useState(580); 
+  const [shapeIntensity, setShapeIntensity] = useState(120);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -118,7 +118,7 @@ export default function PosterEditorTool() {
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Kéo thả ảnh, tuỳ chỉnh hình nền và viền thẻ.</p>
+            <p className="text-sm text-zinc-500">Căn chỉnh khoảng cách chuẩn xác theo mẫu.</p>
           </div>
 
           <div className="space-y-4">
@@ -132,10 +132,11 @@ export default function PosterEditorTool() {
                   onChange={(e) => setBgBottomShape(e.target.value as BgBottomShape)}
                   className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none font-medium text-zinc-700 focus:ring-2 focus:ring-zinc-400"
                 >
+                  <option value="slant-down">Cắt xéo xuống (Giống mẫu)</option>
+                  <option value="slant-up">Cắt xéo lên</option>
                   <option value="curved">Đường cong Bezier</option>
                   <option value="arch">Vòm cung</option>
                   <option value="wave">Đường sóng (Wave)</option>
-                  <option value="slant">Cắt chéo (Slant)</option>
                   <option value="ellipse">Vòng Elip</option>
                   <option value="zigzag">Răng cưa (Zigzag)</option>
                   <option value="star">Tia nhọn (Star)</option>
@@ -144,7 +145,7 @@ export default function PosterEditorTool() {
                 
                 <Range label="Chiều cao nền" value={shapeHeight} min={300} max={900} step={10} onChange={setShapeHeight} />
                 {bgBottomShape !== 'flat' && (
-                  <Range label="Độ sâu uốn cong" value={shapeIntensity} min={0} max={250} step={5} onChange={setShapeIntensity} />
+                  <Range label="Độ sâu uốn/cắt" value={shapeIntensity} min={0} max={300} step={5} onChange={setShapeIntensity} />
                 )}
               </div>
             </div>
@@ -165,8 +166,8 @@ export default function PosterEditorTool() {
               <ColorInput label="Màu chữ" value={textColor} onChange={setTextColor} />
               <div className="col-span-2 border-t border-zinc-200 my-1"></div>
               <ColorInput label="Màu nền nội dung" value={cardColor} onChange={setCardColor} />
-              <ColorInput label="Viền thẻ nội dung" value={borderColor} onChange={setBorderColor} />
-              <ColorInput label="Viền khung ảnh" value={imageBorderColor} onChange={setImageBorderColor} />
+              <ColorInput label="Viền thẻ" value={borderColor} onChange={setBorderColor} />
+              <ColorInput label="Viền ảnh" value={imageBorderColor} onChange={setImageBorderColor} />
             </div>
 
             <Input label="Giá tiền" value={price} onChange={setPrice} />
@@ -279,7 +280,8 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     const w = POSTER_W; const h = data.shapeHeight; const inst = data.shapeIntensity;
     switch (data.bgBottomShape) {
       case "flat": return `M0,0 H${w} V${h} H0 Z`;
-      case "slant": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
+      case "slant-up": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
+      case "slant-down": return `M0,0 H${w} V${h} L0,${h - inst} Z`; // Xéo cao bên trái, thấp bên phải
       case "curved": return `M0,0 H${w} V${h - inst} Q${w/2},${h + inst} 0,${h - inst} Z`;
       case "arch": return `M0,0 H${w} V${h} Q${w/2},${h - inst*3} 0,${h} Z`;
       case "ellipse": return `M0,0 H${w} V${h} A${w/2},${inst} 0 0,1 0,${h} Z`;
@@ -341,26 +343,25 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
       </div>
 
       <div 
-        className="absolute z-10 rounded-[44px] flex flex-col px-[50px] py-[30px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
+        className="absolute z-10 rounded-[44px] flex flex-col px-[60px] py-[35px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
         style={{ 
           left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, 
           borderWidth: '5px', borderColor: data.borderColor, backgroundColor: data.cardColor 
         }}
       >
-        <div className="text-center">
-          <div className="text-[86px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
-          <div className="text-[58px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+        <div className="text-center flex flex-col items-center">
+          <div className="text-[92px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
+          <div className="mt-1 text-[60px] font-bold leading-none font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
           {data.studioName && (
-            <div className="mt-2 text-[24px] font-bold uppercase tracking-widest text-zinc-600" style={{ color: data.themeColor }}>{data.studioName}</div>
+            <div className="mt-5 text-[22px] font-bold uppercase tracking-[0.2em] text-zinc-600" style={{ color: data.themeColor }}>{data.studioName}</div>
           )}
         </div>
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="mt-7 flex flex-col gap-6">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
       </div>
 
-      {/* Đã đẩy top lên 1415 để rộng rãi hơn */}
       <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1415, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
         <div className="mt-3 flex items-center gap-6">
@@ -387,7 +388,8 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.moveTo(0, 0); ctx.lineTo(w, 0);
   switch (data.bgBottomShape) {
     case "flat": ctx.lineTo(w, baseH); ctx.lineTo(0, baseH); break;
-    case "slant": ctx.lineTo(w, baseH - inst); ctx.lineTo(0, baseH); break;
+    case "slant-up": ctx.lineTo(w, baseH - inst); ctx.lineTo(0, baseH); break;
+    case "slant-down": ctx.lineTo(w, baseH); ctx.lineTo(0, baseH - inst); break;
     case "curved": ctx.lineTo(w, baseH - inst); ctx.quadraticCurveTo(w/2, baseH + inst, 0, baseH - inst); break;
     case "arch": ctx.lineTo(w, baseH); ctx.quadraticCurveTo(w/2, baseH - inst*3, 0, baseH); break;
     case "ellipse": ctx.lineTo(w, baseH); ctx.ellipse(w/2, baseH, w/2, inst, 0, 0, Math.PI, false); break;
@@ -446,28 +448,29 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
-  ctx.font = "700 86px 'Fredoka', sans-serif";
-  ctx.fillText(data.price, w/2, L.cardY + 105);
+  // Tinh chỉnh lại tọa độ Y và Size chữ trên Canvas để khớp với Preview
+  ctx.font = "700 92px 'Fredoka', sans-serif";
+  ctx.fillText(data.price, w/2, L.cardY + 115);
   
-  ctx.font = "700 58px 'Fredoka', sans-serif";
-  ctx.fillText(data.packageTitle, w/2, L.cardY + 175);
+  ctx.font = "700 60px 'Fredoka', sans-serif";
+  ctx.fillText(data.packageTitle, w/2, L.cardY + 185);
 
   if (data.studioName) {
-    ctx.font = "700 24px 'Quicksand', sans-serif";
-    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 220);
+    ctx.font = "700 22px 'Quicksand', sans-serif";
+    ctx.letterSpacing = "4px"; // Bổ sung khoảng cách chữ cho Canvas nếu trình duyệt hỗ trợ
+    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 240);
+    ctx.letterSpacing = "0px";
   }
 
-  let textY = L.cardY + (data.studioName ? 260 : 220);
+  let textY = L.cardY + (data.studioName ? 300 : 255);
   textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, textY, data.themeColor, data.textColor);
-  textY += 15; 
+  textY += 15; // Khoảng cách giữa 2 section (cũ là 15, nhìn gọn hơn)
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
 
   ctx.textAlign = "center";
   ctx.fillStyle = data.textColor;
   ctx.font = "700 26px 'Quicksand', sans-serif";
   ctx.fillStyle = data.themeColor;
-  
-  // Đồng bộ Toạ độ y với bản HTML
   ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1435);
   ctx.fillStyle = data.textColor;
   ctx.fillText(`${data.address}`, w / 2, 1435);
@@ -480,16 +483,16 @@ function drawCanvasSection(
 ) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  ctx.font = "700 50px 'Dancing Script', cursive, sans-serif";
+  ctx.font = "700 52px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
-  y += 35;
-  ctx.font = "700 26px 'Quicksand', sans-serif";
+  y += 40;
+  ctx.font = "700 25px 'Quicksand', sans-serif";
   for (const item of items) {
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
     ctx.fillStyle = textColor;
-    y = wrapText(ctx, item, x + 25, y, 780, 38);
-    y += 5; 
+    y = wrapText(ctx, item, x + 25, y, 780, 36); // Thu hẹp khoảng cách dòng (line-height) giữa các bullet
+    y += 4; 
   }
   return y;
 }
@@ -522,8 +525,8 @@ function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: numb
 function PosterSection({ title, color, textColor, items }: { title: string, color: string, textColor: string, items: string[] }) {
   return (
     <div className="text-left font-quicksand">
-      <h2 className="text-[50px] font-cursive leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-1 space-y-1.5 text-[26px] font-bold leading-snug" style={{ color: textColor }}>
+      <h2 className="text-[52px] font-cursive leading-none" style={{ color }}>{title}</h2>
+      <ul className="mt-2 space-y-1.5 text-[25px] font-bold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span> <span>{item}</span>
