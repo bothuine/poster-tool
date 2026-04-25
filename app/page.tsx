@@ -6,19 +6,17 @@ import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone } f
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type FitMode = "cover" | "contain";
 
+// Thêm type cho hình dạng nền phía dưới ảnh
+type BgBottomShape = "slant" | "curved";
+
 // Kích thước chuẩn tỷ lệ 2:3
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
-// Cấu trúc Layout
+// Cấu trúc lại toàn bộ Layout để vừa vặn, không bị tràn chữ
 const L = {
-  bg: "#fcf9f2",
-  
-  // Thông số mảng cong nền xanh (Bezier Curve)
-  curveLY: 660,   // Điểm neo bên trái
-  curveRY: 420,   // Điểm neo bên phải
-  curveCpX: 450,  // Toạ độ X điểm uốn
-  curveCpY: 670,  // Toạ độ Y điểm uốn (tạo độ võng)
+  bg: "#f9f4e8",
+  topH: 580, // Chiều cao mảng xanh lá bên trên
 
   imageX: 55,
   imageY: 35,
@@ -27,72 +25,71 @@ const L = {
   imageR: 42,
 
   cardX: 55,
-  cardY: 610, 
+  cardY: 600, // Đẩy card lên một chút
   cardW: 914,
-  cardH: 780, 
+  cardH: 810, // Tăng chiều cao card để chứa đủ 2 list Dịch vụ và Sản phẩm
   cardR: 44,
 };
 
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [price, setPrice] = useState("2199k");
-  const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
-  const [studioName, setStudioName] = useState("");
+  const [price, setPrice] = useState("2299k");
+  const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
+  const [studioName, setStudioName] = useState("SON BABY STUDIO");
 
   const [serviceItems, setServiceItems] = useState([
-    "Chụp ngay tại nhà",
-    "2 Bối cảnh",
-    "Hỗ trợ toàn bộ trang phục và concept",
+    "Chụp tại Phim trường Son Studio",
+    "3 Bối cảnh chụp",
+    "Hỗ trợ 2 trang phục cho bé yêu và ba mẹ",
+    "Hỗ trợ chụp cùng ba mẹ",
   ]);
 
   const [productItems, setProductItems] = useState([
-    "11 Ảnh chỉnh sửa hoàn thiện",
-    "10 Ảnh in lụa size 13x18",
-    "1 Ảnh ép gỗ khung size 40x60",
-    "Trả toàn bộ file ảnh gốc Fullsize",
+    "11 ảnh chỉnh sửa hoàn thiện",
+    "10 ảnh in lụa 13x18cm",
+    "1 Ảnh gỗ 40x60cm",
+    "Trả toàn bộ ảnh chụp và ảnh chỉnh sửa full size",
+    "Album đựng ảnh 13x18",
   ]);
 
   const [address, setAddress] = useState("43 Quang Trung, Eakar (Đường 720)");
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
-  const [themeColor, setThemeColor] = useState("#628b55");
-  const [borderColor, setBorderColor] = useState("#628b55");
-  const [textColor, setTextColor] = useState("#628b55");
-  const [cardColor, setCardColor] = useState("#fcf9f2");
+  const [themeColor, setThemeColor] = useState("#57903f");
+  const [borderColor, setBorderColor] = useState("#57903f");
+  const [textColor, setTextColor] = useState("#6a3f25");
+  const [cardColor, setCardColor] = useState("#fffaf0");
 
   const [imageFit, setImageFit] = useState<FitMode>("cover");
   const [imageX, setImageX] = useState(50);
   const [imageY, setImageY] = useState(50);
 
-  // Responsive Refs
-  const measureRef = useRef<HTMLDivElement>(null);
+  // Thêm state để quản lý hình dạng nền phía dưới ảnh
+  const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
+
+  const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     const resizePreview = () => {
-      if (!measureRef.current) return;
-      // Đo chiều rộng chính xác của thẻ cha, trừ đi padding tự động tính scale
-      const availableWidth = measureRef.current.clientWidth;
-      setPreviewScale(Math.min(1, availableWidth / POSTER_W));
+      if (!previewWrapRef.current) return;
+      setPreviewScale(Math.min(1, previewWrapRef.current.clientWidth / POSTER_W));
     };
 
-    // Gọi lần đầu và đăng ký event resize
     resizePreview();
     window.addEventListener("resize", resizePreview);
-    
-    // Đảm bảo font load xong để tính toán scale lại nếu cần
-    document.fonts.ready.then(resizePreview);
-
     return () => window.removeEventListener("resize", resizePreview);
   }, []);
 
   const applyPreset = (type: string) => {
     const presets: Record<string, string[]> = {
-      newbornGreen: ["#628b55", "#628b55", "#628b55", "#fcf9f2"],
+      babyGreen: ["#57903f", "#57903f", "#6a3f25", "#fffaf0"],
       luxuryGold: ["#0f172a", "#d4af37", "#5b4636", "#fff7e6"],
       softPink: ["#d97b93", "#c75f7a", "#7a3f4d", "#fff5f7"],
+      warmBrown: ["#8b5e3c", "#c89f68", "#5c3b24", "#fff7ed"],
       minimalBlack: ["#111111", "#888888", "#333333", "#ffffff"],
+      saleRed: ["#ef4444", "#111111", "#5a2a2a", "#fff7f0"],
     };
 
     const p = presets[type];
@@ -137,11 +134,10 @@ export default function PosterEditorTool() {
     borderColor,
     textColor,
     cardColor,
+    bgBottomShape, // Truyền thông tin hình dạng nền
   };
 
   const downloadPNG = async () => {
-    await document.fonts.ready;
-
     const canvas = document.createElement("canvas");
     canvas.width = POSTER_W * 2;
     canvas.height = POSTER_H * 2;
@@ -153,25 +149,19 @@ export default function PosterEditorTool() {
     await drawPosterCanvas(ctx, data);
 
     const link = document.createElement("a");
-    link.download = `poster-sonstudio-${Date.now()}.png`;
+    link.download = `poster-${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   };
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-2 md:p-6 lg:p-8 font-quicksand overflow-x-hidden">
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&display=swap');
-        .font-cursive { font-family: 'Dancing Script', cursive; }
-        .font-quicksand { font-family: 'Quicksand', sans-serif; }
-      `}} />
+    <main className="min-h-screen bg-zinc-100 p-3 md:p-8">
+      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
+        <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5">
+          <h1 className="text-2xl font-bold text-zinc-900">Poster Editor</h1>
+          <p className="mt-1 text-sm text-zinc-500">Upload ảnh, chỉnh màu, nội dung, căn ảnh rồi xuất PNG.</p>
 
-      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[430px_1fr]">
-        <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit">
-          <h1 className="text-2xl font-bold text-zinc-900 font-quicksand">Poster Editor</h1>
-          <p className="mt-1 text-sm text-zinc-500">Tự động bo góc đường cong, scale mượt trên điện thoại.</p>
-
-          <div className="mt-5 space-y-4 font-quicksand">
+          <div className="mt-5 space-y-4">
             <label className="block">
               <span className="text-sm font-medium">Ảnh chính</span>
               <div className="mt-2 flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 p-5 hover:bg-zinc-50">
@@ -188,16 +178,18 @@ export default function PosterEditorTool() {
                 <Palette className="h-4 w-4" /> Màu & style
               </h3>
 
-              <label className="block text-sm font-medium">Preset màu</label>
+              <label className="block text-sm font-medium">Preset màu nhanh</label>
               <select
                 onChange={(e) => applyPreset(e.target.value)}
-                defaultValue="newbornGreen"
-                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:ring-2"
+                defaultValue="babyGreen"
+                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
               >
-                <option value="newbornGreen">Newborn Green</option>
+                <option value="babyGreen">Baby Green</option>
                 <option value="luxuryGold">Luxury Gold</option>
                 <option value="softPink">Soft Pink</option>
+                <option value="warmBrown">Warm Brown</option>
                 <option value="minimalBlack">Minimal Black</option>
+                <option value="saleRed">Sale Red</option>
               </select>
 
               <div className="mt-3 grid grid-cols-2 gap-3">
@@ -206,14 +198,28 @@ export default function PosterEditorTool() {
                 <ColorInput label="Màu chữ nội dung" value={textColor} onChange={setTextColor} />
                 <ColorInput label="Màu khung nội dung" value={cardColor} onChange={setCardColor} />
               </div>
+
+              {/* Tùy chọn hình dạng nền phía dưới ảnh */}
+              <div className="mt-3 block">
+                <label className="text-sm font-medium">Hình dạng nền bên dưới</label>
+                <select
+                  value={bgBottomShape}
+                  onChange={(e) => setBgBottomShape(e.target.value as BgBottomShape)}
+                  className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
+                >
+                  <option value="slant">Chéo (Giống bản cũ)</option>
+                  <option value="curved">Cong (Giống mẫu mới)</option>
+                </select>
+              </div>
             </div>
 
             <div className="rounded-xl border border-zinc-200 p-3">
               <h3 className="mb-3 font-semibold">Căn ảnh upload</h3>
+              <label className="block text-sm font-medium">Kiểu hiển thị ảnh</label>
               <select
                 value={imageFit}
                 onChange={(e) => setImageFit(e.target.value as FitMode)}
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none"
+                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
               >
                 <option value="cover">Fill khung đẹp nhất, không méo ảnh</option>
                 <option value="contain">Giữ nguyên ảnh, không crop</option>
@@ -229,7 +235,7 @@ export default function PosterEditorTool() {
 
             <Input label="Giá" value={price} onChange={setPrice} />
             <Input label="Tên gói" value={packageTitle} onChange={setPackageTitle} />
-            <Input label="Tên studio (để trống nếu ẩn)" value={studioName} onChange={setStudioName} />
+            <Input label="Tên studio" value={studioName} onChange={setStudioName} />
 
             <EditableList title="Nội dung Dịch vụ" items={serviceItems} setItems={setServiceItems} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />
             <EditableList title="Nội dung Sản phẩm" items={productItems} setItems={setProductItems} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />
@@ -243,30 +249,25 @@ export default function PosterEditorTool() {
               className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-sm"
               style={{ backgroundColor: themeColor }}
             >
-              <Download className="h-5 w-5" /> Xuất PNG HD
+              <Download className="h-5 w-5" /> Xuất PNG
             </button>
           </div>
         </section>
 
-        {/* Khung chứa Preview có cơ chế Responsive hoàn hảo */}
-        <section className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center">
-          <div className="mb-3 text-sm text-zinc-500 w-full text-center">
-            Preview tỷ lệ 2:3. Đã tự động thu nhỏ vừa khít với màn hình của bạn.
+        <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden">
+          <div className="mb-3 text-sm text-zinc-500">
+            Preview tỷ lệ 2:3 giống mẫu. File xuất không méo ảnh.
           </div>
-          
-          {/* Div ẩn này dùng để đo đạc chiều rộng tối đa mà container cho phép */}
-          <div ref={measureRef} className="w-full h-0" />
 
-          {/* Box chứa Poster đã được scale */}
           <div
-            className="relative transition-all duration-200 ease-out"
+            className="relative"
             style={{
               width: POSTER_W * previewScale,
               height: POSTER_H * previewScale,
             }}
           >
             <div
-              className="absolute left-0 top-0 shadow-lg border border-zinc-100"
+              className="absolute left-0 top-0 border border-zinc-100"
               style={{
                 width: POSTER_W,
                 height: POSTER_H,
@@ -300,6 +301,7 @@ type PosterData = {
   borderColor: string;
   textColor: string;
   cardColor: string;
+  bgBottomShape: BgBottomShape; // Thêm type cho dữ liệu preview
 };
 
 function PosterPreview(data: PosterData) {
@@ -312,27 +314,42 @@ function PosterPreview(data: PosterData) {
       }
     : {};
 
+  // Hàm tạo clip-path cho hình dạng nền phía dưới ảnh
+  const getBottomShapeClipPath = () => {
+    if (data.bgBottomShape === "slant") {
+      // Hình chéo như bản cũ
+      return "polygon(0 0, 100% 0, 100% 100%, 0 85%)";
+    } else {
+      // Hình cong như mẫu mới, sử dụng SVG làm nguồn cho path (được khai báo bên dưới)
+      return "url(#curvedPath)";
+    }
+  };
+
   return (
-    <div className="relative h-full w-full overflow-hidden font-quicksand" style={{ backgroundColor: L.bg }}>
+    <div className="relative h-full w-full overflow-hidden bg-[#f9f4e8] font-quicksand">
       
-      {/* Nền xanh uốn cong bằng SVG Path */}
-      <svg 
-        className="absolute inset-x-0 top-0" 
-        width={POSTER_W} 
-        height={L.curveLY + 50} 
-        viewBox={`0 0 ${POSTER_W} ${L.curveLY + 50}`} 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path 
-          d={`M0 0 H${POSTER_W} V${L.curveRY} Q${L.curveCpX} ${L.curveCpY} 0 ${L.curveLY} Z`} 
-          fill={data.themeColor} 
-        />
+      {/* SVG khai báo path cho clip-path hình cong (ẩn đi) */}
+      <svg width="0" height="0">
+        <defs>
+          {/* Path uốn cong được điều chỉnh cho vừa với layout (POSTER_W, POSTER_H) */}
+          <clipPath id="curvedPath" clipPathUnits="objectBoundingBox">
+            <path d="M0,0 H1 V1 C0.8,0.9,0.2,0.95,0,1 Z" />
+          </clipPath>
+        </defs>
       </svg>
 
-      {/* Ảnh chính */}
+      {/* Nền chủ đạo màu xanh phía trên với clip-path hình dạng nền */}
+      <div 
+        className="absolute inset-x-0 top-0 h-[640px]" 
+        style={{ 
+          backgroundColor: data.themeColor,
+          clipPath: getBottomShapeClipPath(),
+        }} 
+      />
+
+      {/* Ảnh chính được căn chỉnh và crop theo khung */}
       <div
-        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-md"
+        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-sm"
         style={{
           left: L.imageX,
           top: L.imageY,
@@ -348,7 +365,7 @@ function PosterPreview(data: PosterData) {
         )}
       </div>
 
-      {/* Khung Card */}
+      {/* Khung nội dung */}
       <div
         className="absolute z-10 overflow-hidden rounded-[44px] border-[5px] shadow-sm"
         style={{
@@ -401,6 +418,45 @@ function PosterPreview(data: PosterData) {
   );
 }
 
+// Hàm vẽ clip-path trên Canvas cho nền phía dưới ảnh
+function drawCanvasShapes(
+  ctx: CanvasRenderingContext2D,
+  data: PosterData,
+  w: number,
+  h: number
+) {
+  const topH = 640;
+  
+  ctx.save();
+  ctx.beginPath();
+  
+  if (data.bgBottomShape === "slant") {
+    // Vẽ đa giác hình chéo giống bản cũ
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w, 0);
+    ctx.lineTo(w, topH);
+    ctx.lineTo(0, topH * 0.85); // 85% chiều cao của mảng xanh là điểm thấp nhất bên trái
+  } else {
+    // Vẽ đường cong giống mẫu mới bằng quadraticCurveTo
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w, 0);
+    ctx.lineTo(w, topH);
+    // Điểm điều khiển uốn cong (CpX, CpY) và điểm kết thúc uốn cong (X, Y)
+    // Tỉ lệ được lấy tương tự như SVG clip-path phía trên (C0.8,0.9,0.2,0.95,0,1)
+    const cpX = w * 0.5;
+    const cpY = topH * 0.93; // 93% chiều cao, tạo độ võng nhẹ
+    ctx.quadraticCurveTo(cpX, cpY, 0, topH); 
+  }
+
+  ctx.closePath();
+  ctx.clip(); // Clip khu vực vẽ tiếp theo vào hình dạng đã tạo
+
+  ctx.fillStyle = data.themeColor;
+  ctx.fillRect(0, 0, w, topH);
+  
+  ctx.restore(); // Bỏ clip
+}
+
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   ctx.clearRect(0, 0, POSTER_W, POSTER_H);
 
@@ -408,15 +464,8 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, POSTER_W, POSTER_H);
 
-  // Vẽ đường cong nền cắt xéo
-  ctx.fillStyle = data.themeColor;
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(POSTER_W, 0);
-  ctx.lineTo(POSTER_W, L.curveRY); // Điểm Neo Phải
-  ctx.quadraticCurveTo(L.curveCpX, L.curveCpY, 0, L.curveLY); // Đường uốn Bezier (Điểm điều khiển, Điểm Neo Trái)
-  ctx.closePath();
-  ctx.fill();
+  // Vẽ hình dạng nền màu xanh với clip-path chính xác
+  drawCanvasShapes(ctx, data, POSTER_W, POSTER_H);
 
   // Draw main image
   ctx.save();
@@ -638,7 +687,7 @@ function PosterSection({
   items: string[];
 }) {
   return (
-    <div className="text-left">
+    <div className="text-left font-quicksand">
       <h2 className="text-[54px] font-cursive leading-tight" style={{ color }}>{title}</h2>
       <ul className="mt-2 space-y-2 text-[28px] font-semibold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
@@ -662,7 +711,7 @@ function Input({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block">
+    <label className="block font-quicksand">
       <span className="text-sm font-medium">{label}</span>
       <input
         value={value}
@@ -683,7 +732,7 @@ function ColorInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block">
+    <label className="block font-quicksand">
       <span className="text-xs font-medium">{label}</span>
       <input
         type="color"
@@ -711,7 +760,7 @@ function Range({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="block">
+    <label className="block font-quicksand">
       <div className="mb-1 flex justify-between text-sm">
         <span>{label}</span>
         <span className="text-zinc-500">{value.toFixed(0)}</span>
@@ -745,7 +794,7 @@ function EditableList({
   removeItem: (list: string[], setList: SetList, index: number) => void;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 p-3">
+    <div className="rounded-xl border border-zinc-200 p-3 font-quicksand">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-semibold">{title}</h3>
         <button
