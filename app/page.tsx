@@ -50,14 +50,16 @@ export default function PosterEditorTool() {
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
+  // KHÔI PHỤC BẢNG MÀU ĐẦY ĐỦ
   const [themeColor, setThemeColor] = useState("#628b55");
-  const [borderColor, setBorderColor] = useState("#628b55");
   const [textColor, setTextColor] = useState("#628b55");
+  const [borderColor, setBorderColor] = useState("#628b55");
   const [cardColor, setCardColor] = useState("#fcf9f2");
+  const [imageBorderColor, setImageBorderColor] = useState("#ffffff");
 
   // States mảng màu
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
-  const [shapeHeight, setShapeHeight] = useState(620); // Điểm thả mảng màu (Càng nhỏ càng cao)
+  const [shapeHeight, setShapeHeight] = useState(620); 
   const [shapeIntensity, setShapeIntensity] = useState(70);
 
   const previewWrapRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,7 @@ export default function PosterEditorTool() {
   const data: PosterData = {
     photo, imgTransform, price, packageTitle, studioName,
     serviceItems, productItems, address, facebook, phone,
-    themeColor, borderColor, textColor, cardColor,
+    themeColor, borderColor, textColor, cardColor, imageBorderColor,
     bgBottomShape, shapeHeight, shapeIntensity
   };
 
@@ -111,15 +113,13 @@ export default function PosterEditorTool() {
       `}} />
 
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
-        {/* BẢNG ĐIỀU KHIỂN */}
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Tương tác trực tiếp trên ảnh để căn chỉnh.</p>
+            <p className="text-sm text-zinc-500">Kéo thả ảnh, tuỳ chỉnh hình nền và viền thẻ.</p>
           </div>
 
           <div className="space-y-4">
-            {/* Tùy chỉnh Background */}
             <div className="rounded-xl border border-zinc-200 p-4 bg-zinc-50/50">
               <h3 className="mb-4 flex items-center gap-2 font-bold text-zinc-700">
                 <Palette className="h-5 w-5" /> Tuỳ chỉnh nền phía trên
@@ -131,7 +131,7 @@ export default function PosterEditorTool() {
                   className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none font-medium text-zinc-700 focus:ring-2 focus:ring-zinc-400"
                 >
                   <option value="curved">Đường cong Bezier</option>
-                  <option value="arch">Vòm cung (Mới)</option>
+                  <option value="arch">Vòm cung</option>
                   <option value="wave">Đường sóng (Wave)</option>
                   <option value="slant">Cắt chéo (Slant)</option>
                   <option value="ellipse">Vòng Elip</option>
@@ -140,20 +140,9 @@ export default function PosterEditorTool() {
                   <option value="flat">Cắt ngang (Phẳng)</option>
                 </select>
                 
-                <Range 
-                  label="Chiều cao nền (Kéo nhỏ để đẩy lên cao)" 
-                  value={shapeHeight} 
-                  min={300} max={900} step={10} 
-                  onChange={setShapeHeight} 
-                />
-
+                <Range label="Chiều cao nền" value={shapeHeight} min={300} max={900} step={10} onChange={setShapeHeight} />
                 {bgBottomShape !== 'flat' && (
-                  <Range 
-                    label="Độ sâu / Cường độ uốn" 
-                    value={shapeIntensity} 
-                    min={0} max={250} step={5} 
-                    onChange={setShapeIntensity} 
-                  />
+                  <Range label="Độ sâu uốn cong" value={shapeIntensity} min={0} max={250} step={5} onChange={setShapeIntensity} />
                 )}
               </div>
             </div>
@@ -168,9 +157,15 @@ export default function PosterEditorTool() {
               </div>
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <ColorInput label="Màu chủ đạo" value={themeColor} onChange={setThemeColor} />
+            {/* BẢNG MÀU CHUYÊN SÂU */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-xl border border-zinc-200 p-4 bg-zinc-50/50">
+              <div className="col-span-2 text-sm font-bold text-zinc-700 mb-1">MÀU SẮC CHỦ ĐẠO</div>
+              <ColorInput label="Màu tổng thể" value={themeColor} onChange={setThemeColor} />
               <ColorInput label="Màu chữ" value={textColor} onChange={setTextColor} />
+              <div className="col-span-2 border-t border-zinc-200 my-1"></div>
+              <ColorInput label="Màu nền nội dung" value={cardColor} onChange={setCardColor} />
+              <ColorInput label="Viền thẻ nội dung" value={borderColor} onChange={setBorderColor} />
+              <ColorInput label="Viền khung ảnh" value={imageBorderColor} onChange={setImageBorderColor} />
             </div>
 
             <Input label="Giá tiền" value={price} onChange={setPrice} />
@@ -195,28 +190,16 @@ export default function PosterEditorTool() {
 
         {/* KHU VỰC PREVIEW */}
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
-          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước (Tương tác Kéo thả & Zoom ảnh)</div>
+          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước (Kéo thả & Zoom)</div>
           <div
             className="relative shadow-2xl border border-zinc-100 bg-white"
-            style={{
-              width: POSTER_W * previewScale,
-              height: POSTER_H * previewScale,
-            }}
+            style={{ width: POSTER_W * previewScale, height: POSTER_H * previewScale }}
           >
             <div
               className="absolute left-0 top-0"
-              style={{
-                width: POSTER_W,
-                height: POSTER_H,
-                transform: `scale(${previewScale})`,
-                transformOrigin: "top left",
-              }}
+              style={{ width: POSTER_W, height: POSTER_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}
             >
-              <PosterPreview 
-                data={data} 
-                setImgTransform={setImgTransform} 
-                previewScale={previewScale} 
-              />
+              <PosterPreview data={data} setImgTransform={setImgTransform} previewScale={previewScale} />
             </div>
           </div>
         </section>
@@ -240,19 +223,18 @@ type PosterData = {
   borderColor: string;
   textColor: string;
   cardColor: string;
+  imageBorderColor: string;
   bgBottomShape: BgBottomShape;
   shapeHeight: number;
   shapeIntensity: number;
 };
 
-// COMPONENT PREVIEW TƯƠNG TÁC ĐƯỢC
 function PosterPreview({ data, setImgTransform, previewScale }: { 
   data: PosterData, 
   setImgTransform: React.Dispatch<React.SetStateAction<{x: number, y: number, scale: number}>>,
   previewScale: number 
 }) {
 
-  // Kỹ thuật Event Listener cho ảnh để Drag & Scroll
   const isDragging = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const dragStartTransform = useRef({ x: 0, y: 0 });
@@ -277,12 +259,11 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
-  // Wheel event listener cho scroll chuột
   useEffect(() => {
     const el = imgBoxRef.current;
     if (!el) return;
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault(); // Chặn cuộn trang khi lăn chuột trên ảnh
+      e.preventDefault();
       setImgTransform(p => ({ ...p, scale: Math.max(0.1, p.scale - e.deltaY * 0.0015) }));
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
@@ -290,10 +271,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   }, [setImgTransform]);
 
   const getPathData = () => {
-    const w = POSTER_W;
-    const h = data.shapeHeight;
-    const inst = data.shapeIntensity;
-
+    const w = POSTER_W; const h = data.shapeHeight; const inst = data.shapeIntensity;
     switch (data.bgBottomShape) {
       case "flat": return `M0,0 H${w} V${h} H0 Z`;
       case "slant": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
@@ -301,22 +279,8 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
       case "arch": return `M0,0 H${w} V${h} Q${w/2},${h - inst*3} 0,${h} Z`;
       case "ellipse": return `M0,0 H${w} V${h} A${w/2},${inst} 0 0,1 0,${h} Z`;
       case "wave": return `M0,0 H${w} V${h} C${w*0.75},${h+inst} ${w*0.25},${h-inst} 0,${h} Z`;
-      case "zigzag": {
-        let p = `M0,0 H${w} V${h}`;
-        const steps = 10;
-        for(let i=1; i<=steps; i++) {
-          p += ` L${w - (w/steps)*i},${(i%2===0) ? h : h - inst}`;
-        }
-        return p + " Z";
-      }
-      case "star": {
-        let p = `M0,0 H${w} V${h}`;
-        const steps = 4;
-        for(let i=1; i<=steps; i++) {
-          p += ` L${w - (w/steps)*i + (w/steps/2)},${h+inst} L${w - (w/steps)*i},${h}`;
-        }
-        return p + " Z";
-      }
+      case "zigzag": { let p = `M0,0 H${w} V${h}`; for(let i=1; i<=10; i++) p += ` L${w - (w/10)*i},${(i%2===0) ? h : h - inst}`; return p + " Z"; }
+      case "star": { let p = `M0,0 H${w} V${h}`; for(let i=1; i<=4; i++) p += ` L${w - (w/4)*i + (w/4/2)},${h+inst} L${w - (w/4)*i},${h}`; return p + " Z"; }
       default: return `M0,0 H${w} V${h} H0 Z`;
     }
   };
@@ -327,39 +291,30 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         <path d={getPathData()} fill={data.themeColor} />
       </svg>
 
-      {/* VÙNG CHỨA ẢNH (Kéo thả & Tương tác) */}
       <div 
         ref={imgBoxRef}
-        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-xl group touch-none"
-        style={{ left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
+        // Thêm Box Shadow CSS cho HTML Preview
+        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-[0_15px_30px_rgba(0,0,0,0.25)] group touch-none"
+        style={{ 
+          left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab',
+          borderWidth: '6px', borderColor: data.imageBorderColor // Viền cho ảnh
+        }}
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       >
         {!data.photo ? (
           <div className="flex h-full items-center justify-center text-zinc-400 font-bold text-2xl flex-col gap-3">
-            <ImagePlus size={48} />
-            Khu vực hiển thị ảnh
+            <ImagePlus size={48} /> Khu vực hiển thị ảnh
           </div>
         ) : (
           <>
-            <img 
-              src={data.photo} 
-              alt="Uploaded" 
-              draggable={false}
-              style={{
-                position: 'absolute',
-                width: '100%', height: '100%',
-                objectFit: 'cover',
-                pointerEvents: 'none', // Để box cha hứng event
+            <img src={data.photo} draggable={false} style={{
+                position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none',
                 transform: `translate(${data.imgTransform.x}px, ${data.imgTransform.y}px) scale(${data.imgTransform.scale})`,
-              }}
-            />
-            {/* Thanh công cụ mini cho ảnh */}
+            }}/>
             <div className="absolute top-4 right-4 flex gap-2 z-50 bg-black/50 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition shadow-lg">
               <button title="Phóng to" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: p.scale + 0.1})); }}><ZoomIn size={22}/></button>
               <button title="Thu nhỏ" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: Math.max(0.1, p.scale - 0.1)})); }}><ZoomOut size={22}/></button>
-              <button title="Khôi phục gốc" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform({x:0, y:0, scale: 1}); }}><RotateCcw size={22}/></button>
+              <button title="Khôi phục" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform({x:0, y:0, scale: 1}); }}><RotateCcw size={22}/></button>
             </div>
             <div className="absolute top-4 left-4 z-50 bg-black/50 px-3 py-1.5 rounded-lg text-white opacity-0 group-hover:opacity-100 transition shadow-lg text-[16px] font-medium flex items-center gap-2">
                <Move size={18} /> Kéo để di chuyển
@@ -368,8 +323,13 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         )}
       </div>
 
-      <div className="absolute z-10 rounded-[44px] border-[5px] shadow-sm flex flex-col px-[64px] py-[40px]"
-        style={{ left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, borderColor: data.borderColor, backgroundColor: data.cardColor }}>
+      <div 
+        className="absolute z-10 rounded-[44px] flex flex-col px-[64px] py-[40px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
+        style={{ 
+          left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, 
+          borderWidth: '5px', borderColor: data.borderColor, backgroundColor: data.cardColor 
+        }}
+      >
         <div className="text-center">
           <div className="text-[82px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
           <div className="mt-2 text-[54px] font-black leading-tight uppercase" style={{ color: data.themeColor }}>{data.packageTitle}</div>
@@ -381,10 +341,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
       </div>
 
       <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1425, color: data.textColor }}>
-        <div className="flex items-center gap-3">
-          <MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> 
-          <span>{data.address}</span>
-        </div>
+        <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
         <div className="mt-3 flex items-center gap-6">
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
           <div className="text-zinc-400 px-2">|</div>
@@ -395,7 +352,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   );
 }
 
-// THUẬT TOÁN DRAW CANVAS (XUẤT FILE KHỚP VỚI PREVIEW)
+// BẢN FIX: THÊM SHADOW VÀ BORDER KHI XUẤT CANVAS
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
   const h = POSTER_H;
@@ -407,85 +364,77 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
 
   ctx.save();
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(w, 0);
-
+  ctx.moveTo(0, 0); ctx.lineTo(w, 0);
   switch (data.bgBottomShape) {
     case "flat": ctx.lineTo(w, baseH); ctx.lineTo(0, baseH); break;
     case "slant": ctx.lineTo(w, baseH - inst); ctx.lineTo(0, baseH); break;
-    case "curved": 
-      ctx.lineTo(w, baseH - inst);
-      ctx.quadraticCurveTo(w/2, baseH + inst, 0, baseH - inst);
-      break;
-    case "arch":
-      ctx.lineTo(w, baseH);
-      ctx.quadraticCurveTo(w/2, baseH - inst*3, 0, baseH);
-      break;
-    case "ellipse":
-      ctx.lineTo(w, baseH);
-      ctx.ellipse(w/2, baseH, w/2, inst, 0, 0, Math.PI, false);
-      break;
-    case "wave":
-      ctx.lineTo(w, baseH);
-      ctx.bezierCurveTo(w*0.75, baseH + inst, w*0.25, baseH - inst, 0, baseH);
-      break;
-    case "zigzag":
-      ctx.lineTo(w, baseH);
-      const zSteps = 10;
-      for(let i=1; i<=zSteps; i++) {
-        ctx.lineTo(w - (w/zSteps)*i, (i%2===0) ? baseH : baseH - inst);
-      }
-      break;
-    case "star":
-      ctx.lineTo(w, baseH);
-      const sSteps = 4;
-      for(let i=1; i<=sSteps; i++) {
-        ctx.lineTo(w - (w/sSteps)*i + (w/sSteps/2), baseH + inst);
-        ctx.lineTo(w - (w/sSteps)*i, baseH);
-      }
-      break;
+    case "curved": ctx.lineTo(w, baseH - inst); ctx.quadraticCurveTo(w/2, baseH + inst, 0, baseH - inst); break;
+    case "arch": ctx.lineTo(w, baseH); ctx.quadraticCurveTo(w/2, baseH - inst*3, 0, baseH); break;
+    case "ellipse": ctx.lineTo(w, baseH); ctx.ellipse(w/2, baseH, w/2, inst, 0, 0, Math.PI, false); break;
+    case "wave": ctx.lineTo(w, baseH); ctx.bezierCurveTo(w*0.75, baseH + inst, w*0.25, baseH - inst, 0, baseH); break;
+    case "zigzag": ctx.lineTo(w, baseH); for(let i=1; i<=10; i++) ctx.lineTo(w - (w/10)*i, (i%2===0) ? baseH : baseH - inst); break;
+    case "star": ctx.lineTo(w, baseH); for(let i=1; i<=4; i++) { ctx.lineTo(w - (w/4)*i + (w/4/2), baseH + inst); ctx.lineTo(w - (w/4)*i, baseH); } break;
   }
   ctx.closePath();
   ctx.fillStyle = data.themeColor;
   ctx.fill();
   ctx.restore();
 
-  // VẼ ẢNH THEO MA TRẬN TRANSFORM (Pan & Zoom)
+  // VẼ ẢNH KÈM SHADOW & BORDER
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
-  ctx.clip();
+  
+  // Tích hợp Shadow cho Ảnh
+  ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 15;
   ctx.fillStyle = "#f3efe4";
-  ctx.fillRect(L.imageX, L.imageY, L.imageW, L.imageH);
+  ctx.fill(); // Vẽ bóng trước
+
+  // Reset shadow trước khi clip và vẽ ảnh
+  ctx.shadowColor = "transparent";
+  ctx.clip(); // Giới hạn khu vực vẽ ảnh
   
   if (data.photo) {
     const img = await loadImage(data.photo);
-    
-    // Thuật toán giả lập object-fit: cover kết hợp translate và scale
     const baseScale = Math.max(L.imageW / img.width, L.imageH / img.height);
     const S = baseScale * data.imgTransform.scale;
-    
-    const drawW = img.width * S;
-    const drawH = img.height * S;
-    
+    const drawW = img.width * S; const drawH = img.height * S;
     const cx = L.imageX + L.imageW / 2 + data.imgTransform.x;
     const cy = L.imageY + L.imageH / 2 + data.imgTransform.y;
-    
     ctx.drawImage(img, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
   }
+
+  // Vẽ Border Ảnh (Bên trong clip path nên nhân đôi độ dày)
+  ctx.lineWidth = 12; // Viền thực tế hiển thị sẽ là 6px
+  ctx.strokeStyle = data.imageBorderColor;
+  ctx.stroke();
   ctx.restore();
 
-  // Vẽ Khung Card
+  // VẼ KHUNG CARD KÈM SHADOW & BORDER
+  ctx.save();
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
-  ctx.fillStyle = data.cardColor; ctx.fill();
-  ctx.lineWidth = 5; ctx.strokeStyle = data.borderColor; ctx.stroke();
+  
+  // Shadow cho Thẻ nội dung
+  ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 10;
+  
+  ctx.fillStyle = data.cardColor; 
+  ctx.fill(); // Vẽ nền thẻ và bóng
+  
+  // Tắt bóng trước khi viền và viết chữ
+  ctx.shadowColor = "transparent";
+  ctx.lineWidth = 5; 
+  ctx.strokeStyle = data.borderColor; 
+  ctx.stroke();
+  ctx.restore();
 
-  // Vẽ Nội dung Text
+  // Vẽ Chữ
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  
   ctx.font = "900 82px 'Quicksand', sans-serif";
   ctx.fillText(data.price, w/2, L.cardY + 115);
-  
   ctx.font = "900 54px 'Quicksand', sans-serif";
   ctx.fillText(data.packageTitle.toUpperCase(), w/2, L.cardY + 185);
 
@@ -494,16 +443,13 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   textY += 20; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
 
-  // Vẽ Footer Canvas
   ctx.textAlign = "center";
   ctx.fillStyle = data.textColor;
   ctx.font = "700 26px 'Quicksand', sans-serif";
-  
   ctx.fillStyle = data.themeColor;
   ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1450);
   ctx.fillStyle = data.textColor;
   ctx.fillText(`${data.address}`, w / 2, 1450);
-  
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
   ctx.fillText(line2, w / 2, 1500);
 }
@@ -515,10 +461,8 @@ function drawCanvasSection(
   ctx.fillStyle = color;
   ctx.font = "700 54px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
-
   y += 45;
   ctx.font = "700 28px 'Quicksand', sans-serif";
-
   for (const item of items) {
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
@@ -540,9 +484,7 @@ function wrapText(
       ctx.fillText(line.trim(), x, y);
       line = words[i] + " ";
       y += lineHeight;
-    } else {
-      line = testLine;
-    }
+    } else { line = testLine; }
   }
   ctx.fillText(line.trim(), x, y);
   return y + lineHeight; 
@@ -584,7 +526,7 @@ function Input({ label, value, onChange }: { label: string, value: string, onCha
 function ColorInput({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-bold text-zinc-500 uppercase">{label}</span>
+      <span className="text-xs font-bold text-zinc-500 uppercase truncate">{label}</span>
       <div className="flex gap-2 items-center">
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded-lg border-0 bg-transparent p-0" />
         <span className="text-sm font-mono text-zinc-500 font-bold">{value.toUpperCase()}</span>
