@@ -28,15 +28,14 @@ export default function PosterEditorTool() {
   
   const [imgTransform, setImgTransform] = useState({ x: 0, y: 0, scale: 1 });
 
-  const [price, setPrice] = useState("2299k");
+  const [price, setPrice] = useState("2199k");
   const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
   const [studioName, setStudioName] = useState("SON BABY STUDIO");
 
   const [serviceItems, setServiceItems] = useState([
-    "Chụp tại Phim trường Son Studio",
-    "3 Bối cảnh chụp",
-    "Hỗ trợ 2 trang phục cho bé yêu và ba mẹ",
-    "Hỗ trợ chụp cùng ba mẹ",
+    "Chụp ngay tại nhà",
+    "2 Bối cảnh",
+    "Hỗ trợ toàn bộ trang phục và concept",
   ]);
 
   const [productItems, setProductItems] = useState([
@@ -61,16 +60,20 @@ export default function PosterEditorTool() {
   const [shapeHeight, setShapeHeight] = useState(620); 
   const [shapeIntensity, setShapeIntensity] = useState(70);
 
-  const previewWrapRef = useRef<HTMLDivElement>(null);
+  // KHÔI PHỤC BẢN VÁ LỖI RESPONSIVE VỠ KHUNG
+  const measureRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     const resizePreview = () => {
-      if (!previewWrapRef.current) return;
-      setPreviewScale(Math.min(1, previewWrapRef.current.clientWidth / POSTER_W));
+      if (!measureRef.current) return;
+      const availableWidth = measureRef.current.clientWidth;
+      setPreviewScale(Math.min(1, availableWidth / POSTER_W));
     };
+    
     resizePreview();
     window.addEventListener("resize", resizePreview);
+    document.fonts.ready.then(resizePreview); // Tính toán lại sau khi load font
     return () => window.removeEventListener("resize", resizePreview);
   }, []);
 
@@ -104,8 +107,7 @@ export default function PosterEditorTool() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-3 md:p-8 font-quicksand">
-      {/* Đã thêm font Fredoka cho phần giá và tên gói */}
+    <main className="min-h-screen bg-zinc-100 p-2 md:p-6 lg:p-8 font-quicksand overflow-x-hidden">
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&family=Fredoka:wght@600;700&display=swap');
         .font-cursive { font-family: 'Dancing Script', cursive; }
@@ -113,7 +115,7 @@ export default function PosterEditorTool() {
         .font-cute { font-family: 'Fredoka', sans-serif; }
       `}} />
 
-      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[430px_1fr]">
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
@@ -189,10 +191,15 @@ export default function PosterEditorTool() {
           </div>
         </section>
 
-        <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
-          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước (Kéo thả & Zoom)</div>
+        {/* CƠ CHẾ RESPONSIVE ĐÃ ĐƯỢC KHÔI PHỤC */}
+        <section className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
+          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400 text-center w-full">Xem trước (Kéo thả & Zoom)</div>
+          
+          {/* Thước đo ẩn để lấy đúng chiều rộng container */}
+          <div ref={measureRef} className="w-full h-0" />
+
           <div
-            className="relative shadow-2xl border border-zinc-100 bg-white"
+            className="relative shadow-2xl border border-zinc-100 bg-white transition-all duration-200 ease-out"
             style={{ width: POSTER_W * previewScale, height: POSTER_H * previewScale }}
           >
             <div
@@ -344,7 +351,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         }}
       >
         <div className="text-center">
-          {/* Đã áp dụng font-cute (Fredoka) và bỏ hiệu ứng uppercase */}
           <div className="text-[86px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
           <div className="mt-1 text-[58px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
           {data.studioName && (
@@ -442,7 +448,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
-  // Áp dụng Font Fredoka, không chuyển Uppercase cho Title
   ctx.font = "700 86px 'Fredoka', sans-serif";
   ctx.fillText(data.price, w/2, L.cardY + 115);
   
