@@ -7,20 +7,19 @@ type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type BgBottomShape = "flat" | "slant-up" | "slant-down" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
 
 const POSTER_W = 1024;
-// BẢN FIX: Kéo dài chiều cao tổng thể Poster để tạo độ thoáng (Từ 1536 lên 1640)
 const POSTER_H = 1640; 
 
 const L = {
   bg: "#fcf9f2",
   imageX: 55,
-  imageY: 40,  // Căn nhẹ ảnh xuống
+  imageY: 40,  
   imageW: 914,
   imageH: 540, 
   imageR: 42,
   cardX: 55,
-  cardY: 610,  // Đẩy thẻ nội dung xuống để lộ phần xéo nền nhiều hơn
+  cardY: 610,  
   cardW: 914,
-  cardH: 900,  // Kéo dài thẻ nội dung thêm 80px, siêu rộng rãi
+  cardH: 900,  
   cardR: 44,
 };
 
@@ -55,7 +54,6 @@ export default function PosterEditorTool() {
   const [cardColor, setCardColor] = useState("#fcf9f2");
   const [imageBorderColor, setImageBorderColor] = useState("#ffffff");
 
-  // Thiết lập mặc định giống hệt mẫu (Xéo xuống, cao 620, nghiêng 150)
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("slant-down");
   const [shapeHeight, setShapeHeight] = useState(620); 
   const [shapeIntensity, setShapeIntensity] = useState(150);
@@ -358,17 +356,16 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
           )}
         </div>
         
-        {/* Nới lỏng khoảng cách giữa các phần */}
         <div className="mt-10 flex flex-col gap-8">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
       </div>
 
-      {/* Footer được hạ sâu xuống phù hợp với Poster 1640px */}
-      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[28px] font-bold" style={{ top: 1545, color: data.textColor }}>
+      {/* TĂNG KHOẢNG CÁCH DÒNG FOOTER */}
+      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[28px] font-bold" style={{ top: 1535, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
-        <div className="mt-4 flex items-center gap-6">
+        <div className="mt-6 flex items-center gap-6"> {/* Tăng mt-4 thành mt-6 để dãn khoảng cách */}
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
           <div className="text-zinc-400 px-3">|</div>
           <div className="flex items-center gap-2"><Phone className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.phone}</span></div>
@@ -470,16 +467,17 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   textY += 20; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
 
+  // ĐỒNG BỘ KHOẢNG CÁCH FOOTER Ở CANVAS (Tăng y-gap lên 65px)
   ctx.textAlign = "center";
   ctx.fillStyle = data.textColor;
   ctx.font = "700 28px 'Quicksand', sans-serif";
   ctx.fillStyle = data.themeColor;
   
-  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1560);
+  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1550);
   ctx.fillStyle = data.textColor;
-  ctx.fillText(`${data.address}`, w / 2, 1560);
+  ctx.fillText(`${data.address}`, w / 2, 1550);
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
-  ctx.fillText(line2, w / 2, 1610);
+  ctx.fillText(line2, w / 2, 1615); // Dãn khoảng cách dòng thứ 2 xuống thấp hơn
 }
 
 function drawCanvasSection(
