@@ -9,7 +9,6 @@ type BgBottomShape = "flat" | "slant-up" | "slant-down" | "curved" | "wave" | "z
 const POSTER_W = 1024;
 const POSTER_H = 1640; 
 
-// BẢN FIX: Cân đối margin 100px mỗi bên (Khối rộng 824px, tỷ lệ hoàn hảo)
 const L = {
   bg: "#fcf9f2",
   imageX: 100, 
@@ -119,7 +118,7 @@ export default function PosterEditorTool() {
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Đã vá lỗi Zoom ảnh bị dẹp & Cân đối tỷ lệ.</p>
+            <p className="text-sm text-zinc-500">Đã cân đối lại khoảng cách nội dung.</p>
           </div>
 
           <div className="space-y-4">
@@ -292,8 +291,8 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   };
 
   const baseScale = Math.max(L.imageW / imgSize.w, L.imageH / imgSize.h);
-  const renderW = imgSize.w * baseScale;
-  const renderH = imgSize.h * baseScale;
+  const renderW = imgSize.w * baseScale * data.imgTransform.scale;
+  const renderH = imgSize.h * baseScale * data.imgTransform.scale;
 
   const showBorder = data.imageBorderColor && data.imageBorderColor !== 'transparent';
 
@@ -319,7 +318,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
           </div>
         ) : (
           <>
-            {/* FIX ZOOM MÉO: Bổ sung maxWidth: 'none', maxHeight: 'none' để đè Tailwind css */}
             <img 
               src={data.photo} 
               draggable={false} 
@@ -333,16 +331,12 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
                 maxHeight: 'none',
                 objectFit: 'cover',
                 pointerEvents: 'none',
-                // Tích hợp Scale vào Transform thay vì set Width/Height, đảm bảo zoom chuẩn tỷ lệ
                 transform: `translate(-50%, -50%) translate(${data.imgTransform.x}px, ${data.imgTransform.y}px) scale(${data.imgTransform.scale})`,
             }}/>
             <div className="absolute top-4 right-4 flex gap-2 z-50 bg-black/50 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition shadow-lg">
               <button title="Phóng to" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: p.scale + 0.1})); }}><ZoomIn size={22}/></button>
               <button title="Thu nhỏ" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: Math.max(0.1, p.scale - 0.1)})); }}><ZoomOut size={22}/></button>
               <button title="Khôi phục" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform({x:0, y:0, scale: 1}); }}><RotateCcw size={22}/></button>
-            </div>
-            <div className="absolute top-4 left-4 z-50 bg-black/50 px-3 py-1.5 rounded-lg text-white opacity-0 group-hover:opacity-100 transition shadow-lg text-[16px] font-medium flex items-center gap-2">
-               <Move size={18} /> Kéo để di chuyển
             </div>
           </>
         )}
@@ -363,7 +357,8 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
           )}
         </div>
         
-        <div className="mt-8 flex flex-col gap-6">
+        {/* BẢN FIX: Đổi từ mt-8 thành mt-14 để khối nội dung tụt xuống dưới, cân đối chiều dọc */}
+        <div className="mt-14 flex flex-col gap-6">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
@@ -421,7 +416,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.shadowColor = "transparent";
   ctx.clip(); 
   
-  // FIX CANVAS ZOOM: Tích hợp ma trận transform hoàn hảo để không bị crop ngang
   if (data.photo) {
     const img = await loadImage(data.photo);
     const baseScale = Math.max(L.imageW / img.width, L.imageH / img.height);
@@ -476,7 +470,8 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     ctx.letterSpacing = "0px";
   }
 
-  let textY = L.cardY + (data.studioName ? 290 : 250);
+  // BẢN FIX CANVAS: Đẩy toạ độ bắt đầu vẽ chữ xuống sâu hơn 50px để đồng bộ với mt-14
+  let textY = L.cardY + (data.studioName ? 340 : 300); // Cũ là 290 : 250
   textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 65, textY, data.themeColor, data.textColor);
   textY += 24; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 65, textY, data.themeColor, data.textColor);
@@ -506,7 +501,6 @@ function drawCanvasSection(
     ctx.fillStyle = color;
     ctx.fillText("•", x + 15, y); 
     ctx.fillStyle = textColor;
-    // Giới hạn max width chữ để không bị tràn vào lề
     y = wrapText(ctx, item, x + 35, y, L.cardW - 130, 36); 
     y += 6; 
   }
