@@ -1,25 +1,21 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone } from "lucide-react";
+import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone, ZoomIn, ZoomOut, Move, RotateCcw } from "lucide-react";
 
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
-type FitMode = "cover" | "contain";
-type BgBottomShape = "flat" | "slant" | "curved" | "wave" | "zigzag" | "ellipse" | "star";
+type BgBottomShape = "flat" | "slant" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
 
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
 const L = {
   bg: "#fcf9f2",
-  topH: 620,
-
   imageX: 55,
   imageY: 35,
   imageW: 914,
   imageH: 540,
   imageR: 42,
-
   cardX: 55,
   cardY: 620, 
   cardW: 914,
@@ -29,6 +25,10 @@ const L = {
 
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
+  
+  // Transform State cho Tương tác kéo/zoom ảnh
+  const [imgTransform, setImgTransform] = useState({ x: 0, y: 0, scale: 1 });
+
   const [price, setPrice] = useState("2199k");
   const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
   const [studioName, setStudioName] = useState("SON STUDIO BABY & FAMILY");
@@ -55,12 +55,10 @@ export default function PosterEditorTool() {
   const [textColor, setTextColor] = useState("#628b55");
   const [cardColor, setCardColor] = useState("#fcf9f2");
 
-  const [imageFit, setImageFit] = useState<FitMode>("cover");
-  const [imageX, setImageX] = useState(50);
-  const [imageY, setImageY] = useState(50);
-
+  // States mảng màu
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
-  const [shapeIntensity, setShapeIntensity] = useState(60);
+  const [shapeHeight, setShapeHeight] = useState(620); // Điểm thả mảng màu (Càng nhỏ càng cao)
+  const [shapeIntensity, setShapeIntensity] = useState(70);
 
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -76,10 +74,10 @@ export default function PosterEditorTool() {
   }, []);
 
   const data: PosterData = {
-    photo, imageFit, imageX, imageY, price, packageTitle, studioName,
+    photo, imgTransform, price, packageTitle, studioName,
     serviceItems, productItems, address, facebook, phone,
     themeColor, borderColor, textColor, cardColor,
-    bgBottomShape, shapeIntensity
+    bgBottomShape, shapeHeight, shapeIntensity
   };
 
   const downloadPNG = async () => {
@@ -91,14 +89,17 @@ export default function PosterEditorTool() {
     ctx.scale(2, 2);
     await drawPosterCanvas(ctx, data);
     const link = document.createElement("a");
-    link.download = `poster-${bgBottomShape}-${Date.now()}.png`;
+    link.download = `poster-sonstudio-${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   };
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setPhoto(URL.createObjectURL(file));
+    if (file) {
+      setPhoto(URL.createObjectURL(file));
+      setImgTransform({ x: 0, y: 0, scale: 1 }); // Reset vị trí khi up ảnh mới
+    }
   }
 
   return (
@@ -110,37 +111,47 @@ export default function PosterEditorTool() {
       `}} />
 
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
+        {/* BẢNG ĐIỀU KHIỂN */}
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Tùy chỉnh hình dạng nền và nội dung.</p>
+            <p className="text-sm text-zinc-500">Tương tác trực tiếp trên ảnh để căn chỉnh.</p>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-xl border border-zinc-200 p-3 bg-zinc-50/50">
-              <h3 className="mb-3 flex items-center gap-2 font-bold text-zinc-700">
-                <Palette className="h-4 w-4" /> Hình dạng nền bên dưới
+            {/* Tùy chỉnh Background */}
+            <div className="rounded-xl border border-zinc-200 p-4 bg-zinc-50/50">
+              <h3 className="mb-4 flex items-center gap-2 font-bold text-zinc-700">
+                <Palette className="h-5 w-5" /> Tuỳ chỉnh nền phía trên
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <select
                   value={bgBottomShape}
                   onChange={(e) => setBgBottomShape(e.target.value as BgBottomShape)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-400"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none font-medium text-zinc-700 focus:ring-2 focus:ring-zinc-400"
                 >
-                  <option value="flat">Cắt ngang (Flat)</option>
-                  <option value="slant">Cắt chéo (Slant)</option>
-                  <option value="curved">Đường cong Bezier (Curved)</option>
-                  <option value="ellipse">Vòng elip (Ellipse)</option>
+                  <option value="curved">Đường cong Bezier</option>
+                  <option value="arch">Vòm cung (Mới)</option>
                   <option value="wave">Đường sóng (Wave)</option>
+                  <option value="slant">Cắt chéo (Slant)</option>
+                  <option value="ellipse">Vòng Elip</option>
                   <option value="zigzag">Răng cưa (Zigzag)</option>
-                  <option value="star">Ngôi sao / Tia nhọn (Star)</option>
+                  <option value="star">Tia nhọn (Star)</option>
+                  <option value="flat">Cắt ngang (Phẳng)</option>
                 </select>
                 
+                <Range 
+                  label="Chiều cao nền (Kéo nhỏ để đẩy lên cao)" 
+                  value={shapeHeight} 
+                  min={300} max={900} step={10} 
+                  onChange={setShapeHeight} 
+                />
+
                 {bgBottomShape !== 'flat' && (
                   <Range 
-                    label="Độ sâu / Cường độ" 
+                    label="Độ sâu / Cường độ uốn" 
                     value={shapeIntensity} 
-                    min={0} max={200} step={1} 
+                    min={0} max={250} step={5} 
                     onChange={setShapeIntensity} 
                   />
                 )}
@@ -148,12 +159,11 @@ export default function PosterEditorTool() {
             </div>
 
             <label className="block">
-              <span className="text-sm font-medium">Ảnh chính</span>
               <div className="mt-2 flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 p-5 hover:bg-zinc-50 transition">
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                <div className="text-center text-sm text-zinc-500">
+                <div className="text-center text-sm font-semibold text-zinc-500">
                   <ImagePlus className="mx-auto mb-2 h-7 w-7" />
-                  Thay đổi ảnh
+                  Bấm để tải ảnh lên
                 </div>
               </div>
             </label>
@@ -183,8 +193,9 @@ export default function PosterEditorTool() {
           </div>
         </section>
 
+        {/* KHU VỰC PREVIEW */}
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
-          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước thiết kế</div>
+          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước (Tương tác Kéo thả & Zoom ảnh)</div>
           <div
             className="relative shadow-2xl border border-zinc-100 bg-white"
             style={{
@@ -201,7 +212,11 @@ export default function PosterEditorTool() {
                 transformOrigin: "top left",
               }}
             >
-              <PosterPreview {...data} />
+              <PosterPreview 
+                data={data} 
+                setImgTransform={setImgTransform} 
+                previewScale={previewScale} 
+              />
             </div>
           </div>
         </section>
@@ -212,9 +227,7 @@ export default function PosterEditorTool() {
 
 type PosterData = {
   photo: string | null;
-  imageFit: FitMode;
-  imageX: number;
-  imageY: number;
+  imgTransform: { x: number, y: number, scale: number };
   price: string;
   packageTitle: string;
   studioName: string;
@@ -228,35 +241,71 @@ type PosterData = {
   textColor: string;
   cardColor: string;
   bgBottomShape: BgBottomShape;
+  shapeHeight: number;
   shapeIntensity: number;
 };
 
-function PosterPreview(data: PosterData) {
-  const imageBackground = data.photo ? {
-    backgroundImage: `url(${data.photo})`,
-    backgroundSize: data.imageFit === "cover" ? "cover" : "contain",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: data.imageFit === "cover" ? `${data.imageX}% ${data.imageY}%` : "center",
-  } : {};
+// COMPONENT PREVIEW TƯƠNG TÁC ĐƯỢC
+function PosterPreview({ data, setImgTransform, previewScale }: { 
+  data: PosterData, 
+  setImgTransform: React.Dispatch<React.SetStateAction<{x: number, y: number, scale: number}>>,
+  previewScale: number 
+}) {
+
+  // Kỹ thuật Event Listener cho ảnh để Drag & Scroll
+  const isDragging = useRef(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const dragStartTransform = useRef({ x: 0, y: 0 });
+  const imgBoxRef = useRef<HTMLDivElement>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    dragStartTransform.current = { ...data.imgTransform };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    const dx = (e.clientX - dragStartPos.current.x) / previewScale;
+    const dy = (e.clientY - dragStartPos.current.y) / previewScale;
+    setImgTransform(p => ({ ...p, x: dragStartTransform.current.x + dx, y: dragStartTransform.current.y + dy }));
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    isDragging.current = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  };
+
+  // Wheel event listener cho scroll chuột
+  useEffect(() => {
+    const el = imgBoxRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault(); // Chặn cuộn trang khi lăn chuột trên ảnh
+      setImgTransform(p => ({ ...p, scale: Math.max(0.1, p.scale - e.deltaY * 0.0015) }));
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [setImgTransform]);
 
   const getPathData = () => {
     const w = POSTER_W;
-    const h = L.topH;
+    const h = data.shapeHeight;
     const inst = data.shapeIntensity;
 
     switch (data.bgBottomShape) {
       case "flat": return `M0,0 H${w} V${h} H0 Z`;
       case "slant": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
       case "curved": return `M0,0 H${w} V${h - inst} Q${w/2},${h + inst} 0,${h - inst} Z`;
+      case "arch": return `M0,0 H${w} V${h} Q${w/2},${h - inst*3} 0,${h} Z`;
       case "ellipse": return `M0,0 H${w} V${h} A${w/2},${inst} 0 0,1 0,${h} Z`;
       case "wave": return `M0,0 H${w} V${h} C${w*0.75},${h+inst} ${w*0.25},${h-inst} 0,${h} Z`;
       case "zigzag": {
         let p = `M0,0 H${w} V${h}`;
         const steps = 10;
         for(let i=1; i<=steps; i++) {
-          const x = w - (w/steps)*i;
-          const y = (i%2===0) ? h : h - inst;
-          p += ` L${x},${y}`;
+          p += ` L${w - (w/steps)*i},${(i%2===0) ? h : h - inst}`;
         }
         return p + " Z";
       }
@@ -264,8 +313,7 @@ function PosterPreview(data: PosterData) {
         let p = `M0,0 H${w} V${h}`;
         const steps = 4;
         for(let i=1; i<=steps; i++) {
-          const x = w - (w/steps)*i + (w/steps/2);
-          p += ` L${x},${h+inst} L${w - (w/steps)*i},${h}`;
+          p += ` L${w - (w/steps)*i + (w/steps/2)},${h+inst} L${w - (w/steps)*i},${h}`;
         }
         return p + " Z";
       }
@@ -275,13 +323,49 @@ function PosterPreview(data: PosterData) {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#fcf9f2] font-quicksand">
-      <svg className="absolute inset-x-0 top-0" width={POSTER_W} height={L.topH + 300}>
+      <svg className="absolute inset-x-0 top-0" width={POSTER_W} height={data.shapeHeight + 300}>
         <path d={getPathData()} fill={data.themeColor} />
       </svg>
 
-      <div className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-xl"
-        style={{ left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, ...imageBackground }}>
-        {!data.photo && <div className="flex h-full items-center justify-center text-zinc-400">Trống</div>}
+      {/* VÙNG CHỨA ẢNH (Kéo thả & Tương tác) */}
+      <div 
+        ref={imgBoxRef}
+        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-xl group touch-none"
+        style={{ left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        {!data.photo ? (
+          <div className="flex h-full items-center justify-center text-zinc-400 font-bold text-2xl flex-col gap-3">
+            <ImagePlus size={48} />
+            Khu vực hiển thị ảnh
+          </div>
+        ) : (
+          <>
+            <img 
+              src={data.photo} 
+              alt="Uploaded" 
+              draggable={false}
+              style={{
+                position: 'absolute',
+                width: '100%', height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none', // Để box cha hứng event
+                transform: `translate(${data.imgTransform.x}px, ${data.imgTransform.y}px) scale(${data.imgTransform.scale})`,
+              }}
+            />
+            {/* Thanh công cụ mini cho ảnh */}
+            <div className="absolute top-4 right-4 flex gap-2 z-50 bg-black/50 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition shadow-lg">
+              <button title="Phóng to" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: p.scale + 0.1})); }}><ZoomIn size={22}/></button>
+              <button title="Thu nhỏ" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: Math.max(0.1, p.scale - 0.1)})); }}><ZoomOut size={22}/></button>
+              <button title="Khôi phục gốc" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform({x:0, y:0, scale: 1}); }}><RotateCcw size={22}/></button>
+            </div>
+            <div className="absolute top-4 left-4 z-50 bg-black/50 px-3 py-1.5 rounded-lg text-white opacity-0 group-hover:opacity-100 transition shadow-lg text-[16px] font-medium flex items-center gap-2">
+               <Move size={18} /> Kéo để di chuyển
+            </div>
+          </>
+        )}
       </div>
 
       <div className="absolute z-10 rounded-[44px] border-[5px] shadow-sm flex flex-col px-[64px] py-[40px]"
@@ -311,12 +395,12 @@ function PosterPreview(data: PosterData) {
   );
 }
 
-// CANVAS DRAWING (XUẤT FILE ĐÃ FIX LỖI MẤT CHỮ)
+// THUẬT TOÁN DRAW CANVAS (XUẤT FILE KHỚP VỚI PREVIEW)
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
   const h = POSTER_H;
+  const baseH = data.shapeHeight;
   const inst = data.shapeIntensity;
-  const baseH = L.topH;
 
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, w, h);
@@ -332,6 +416,10 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     case "curved": 
       ctx.lineTo(w, baseH - inst);
       ctx.quadraticCurveTo(w/2, baseH + inst, 0, baseH - inst);
+      break;
+    case "arch":
+      ctx.lineTo(w, baseH);
+      ctx.quadraticCurveTo(w/2, baseH - inst*3, 0, baseH);
       break;
     case "ellipse":
       ctx.lineTo(w, baseH);
@@ -362,18 +450,27 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fill();
   ctx.restore();
 
+  // VẼ ẢNH THEO MA TRẬN TRANSFORM (Pan & Zoom)
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   ctx.clip();
   ctx.fillStyle = "#f3efe4";
   ctx.fillRect(L.imageX, L.imageY, L.imageW, L.imageH);
+  
   if (data.photo) {
     const img = await loadImage(data.photo);
-    if (data.imageFit === "cover") {
-      drawImageCover(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH, data.imageX/100, data.imageY/100);
-    } else {
-      drawImageContain(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH);
-    }
+    
+    // Thuật toán giả lập object-fit: cover kết hợp translate và scale
+    const baseScale = Math.max(L.imageW / img.width, L.imageH / img.height);
+    const S = baseScale * data.imgTransform.scale;
+    
+    const drawW = img.width * S;
+    const drawH = img.height * S;
+    
+    const cx = L.imageX + L.imageW / 2 + data.imgTransform.x;
+    const cy = L.imageY + L.imageH / 2 + data.imgTransform.y;
+    
+    ctx.drawImage(img, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
   }
   ctx.restore();
 
@@ -382,7 +479,7 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = data.cardColor; ctx.fill();
   ctx.lineWidth = 5; ctx.strokeStyle = data.borderColor; ctx.stroke();
 
-  // ĐÃ KHÔI PHỤC: Vẽ Nội dung Text vào Canvas
+  // Vẽ Nội dung Text
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
@@ -455,21 +552,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
 }
 
-function drawImageCover(ctx: any, img: any, x: number, y: number, w: number, h: number, fx: number, fy: number) {
-  const r = img.width/img.height, br = w/h;
-  let sw = img.width, sh = img.height;
-  if (r > br) sw = sh * br; else sh = sw / br;
-  const sx = (img.width - sw) * fx, sy = (img.height - sh) * fy;
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-
-function drawImageContain(ctx: any, img: any, x: number, y: number, w: number, h: number) {
-  const r = img.width/img.height, br = w/h;
-  let dw = w, dh = h;
-  if (r > br) dh = w / r; else dw = h * r;
-  ctx.drawImage(img, x + (w - dw)/2, y + (h - dh)/2, dw, dh);
-}
-
 function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r); ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h); ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r); ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
 }
@@ -494,7 +576,7 @@ function Input({ label, value, onChange }: { label: string, value: string, onCha
     <label className="block space-y-1">
       <span className="text-xs font-bold text-zinc-500 uppercase">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-zinc-200 transition" />
+        className="w-full rounded-xl border border-zinc-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-zinc-200 transition font-medium text-zinc-700" />
     </label>
   );
 }
@@ -504,8 +586,8 @@ function ColorInput({ label, value, onChange }: { label: string, value: string, 
     <label className="block space-y-1">
       <span className="text-xs font-bold text-zinc-500 uppercase">{label}</span>
       <div className="flex gap-2 items-center">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded-lg" />
-        <span className="text-sm font-mono text-zinc-400">{value.toUpperCase()}</span>
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded-lg border-0 bg-transparent p-0" />
+        <span className="text-sm font-mono text-zinc-500 font-bold">{value.toUpperCase()}</span>
       </div>
     </label>
   );
@@ -513,29 +595,29 @@ function ColorInput({ label, value, onChange }: { label: string, value: string, 
 
 function Range({ label, value, min, max, step, onChange }: { label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-2 pt-2 border-t border-zinc-100">
       <div className="flex justify-between text-xs font-bold text-zinc-500 uppercase">
         <span>{label}</span> <span>{value}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-zinc-500" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-zinc-500 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer" />
     </div>
   );
 }
 
 function EditableList({ title, items, setItems }: { title: string, items: string[], setItems: SetList }) {
   return (
-    <div className="rounded-xl border border-zinc-200 p-3 bg-white space-y-3">
+    <div className="rounded-xl border border-zinc-200 p-4 bg-white space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-zinc-700">{title}</h3>
-        <button onClick={() => setItems(p => [...p, ""])} className="p-1 hover:bg-zinc-100 rounded-lg transition"><Plus className="h-4 w-4" /></button>
+        <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wide">{title}</h3>
+        <button onClick={() => setItems(p => [...p, ""])} className="p-1.5 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition"><Plus className="h-4 w-4 text-zinc-600" /></button>
       </div>
       <div className="space-y-2">
         {items.map((item, idx) => (
           <div key={idx} className="flex gap-2">
             <input value={item} onChange={(e) => {
               const n = [...items]; n[idx] = e.target.value; setItems(n);
-            }} className="flex-1 rounded-lg border border-zinc-100 px-3 py-1.5 text-sm outline-none focus:border-zinc-300" />
-            <button onClick={() => setItems(items.filter((_, i) => i !== idx))} className="text-zinc-300 hover:text-red-400"><Trash2 className="h-4 w-4" /></button>
+            }} className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 font-medium text-zinc-700 transition" />
+            <button onClick={() => setItems(items.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500 transition px-1"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </div>
