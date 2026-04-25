@@ -6,21 +6,23 @@ import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone, Zo
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type BgBottomShape = "flat" | "slant-up" | "slant-down" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
 
+// Kích thước tỷ lệ chuẩn 2:3 (Perfect Ratio)
 const POSTER_W = 1024;
-const POSTER_H = 1640; 
+const POSTER_H = 1536; 
 
+// Hệ toạ độ chuẩn xác 100% theo ảnh mẫu
 const L = {
   bg: "#fcf9f2",
-  imageX: 55,
-  imageY: 40,  
-  imageW: 914,
-  imageH: 540, 
-  imageR: 42,
-  cardX: 55,
-  cardY: 610,  
-  cardW: 914,
-  cardH: 900,  
-  cardR: 44,
+  imageX: 48,
+  imageY: 48,  
+  imageW: 928,
+  imageH: 580, 
+  imageR: 40,
+  cardX: 48,
+  cardY: 660,  
+  cardW: 928,
+  cardH: 740,  
+  cardR: 40,
 };
 
 export default function PosterEditorTool() {
@@ -28,8 +30,8 @@ export default function PosterEditorTool() {
   const [imgTransform, setImgTransform] = useState({ x: 0, y: 0, scale: 1 });
 
   const [price, setPrice] = useState("2199k");
-  const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
-  const [studioName, setStudioName] = useState("");
+  const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
+  const [studioName, setStudioName] = useState("SON BABY STUDIO");
 
   const [serviceItems, setServiceItems] = useState([
     "Chụp ngay tại nhà",
@@ -42,6 +44,7 @@ export default function PosterEditorTool() {
     "10 Ảnh in lụa size 13x18",
     "1 Ảnh ép gỗ khung size 40x60",
     "Trả toàn bộ file ảnh gốc Fullsize",
+    "Album đựng ảnh 13x18",
   ]);
 
   const [address, setAddress] = useState("43 Quang Trung, Eakar (Đường 720)");
@@ -52,11 +55,14 @@ export default function PosterEditorTool() {
   const [textColor, setTextColor] = useState("#628b55");
   const [borderColor, setBorderColor] = useState("#628b55");
   const [cardColor, setCardColor] = useState("#fcf9f2");
-  const [imageBorderColor, setImageBorderColor] = useState("#ffffff");
+  
+  // Mặc định viền ảnh trong suốt để giống 100% mẫu
+  const [imageBorderColor, setImageBorderColor] = useState("transparent");
 
-  const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("slant-down");
-  const [shapeHeight, setShapeHeight] = useState(620); 
-  const [shapeIntensity, setShapeIntensity] = useState(150);
+  // Thiết lập hình khối mặc định cắt xéo chuẩn mẫu (Slant-up)
+  const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("slant-up");
+  const [shapeHeight, setShapeHeight] = useState(560); 
+  const [shapeIntensity, setShapeIntensity] = useState(180);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -116,7 +122,7 @@ export default function PosterEditorTool() {
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Bố cục mở rộng, padding thanh lịch.</p>
+            <p className="text-sm text-zinc-500">Tỷ lệ vàng 2:3, bố cục hoàn hảo.</p>
           </div>
 
           <div className="space-y-4">
@@ -130,20 +136,18 @@ export default function PosterEditorTool() {
                   onChange={(e) => setBgBottomShape(e.target.value as BgBottomShape)}
                   className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none font-medium text-zinc-700 focus:ring-2 focus:ring-zinc-400"
                 >
-                  <option value="slant-down">Cắt xéo xuống (Chuẩn mẫu)</option>
-                  <option value="slant-up">Cắt xéo lên</option>
+                  <option value="slant-up">Cắt xéo (Chuẩn mẫu)</option>
+                  <option value="slant-down">Cắt xéo ngược</option>
                   <option value="curved">Đường cong Bezier</option>
                   <option value="arch">Vòm cung</option>
                   <option value="wave">Đường sóng (Wave)</option>
                   <option value="ellipse">Vòng Elip</option>
-                  <option value="zigzag">Răng cưa (Zigzag)</option>
-                  <option value="star">Tia nhọn (Star)</option>
                   <option value="flat">Cắt ngang (Phẳng)</option>
                 </select>
                 
-                <Range label="Chiều cao nền" value={shapeHeight} min={300} max={1000} step={10} onChange={setShapeHeight} />
+                <Range label="Chiều cao nền" value={shapeHeight} min={300} max={900} step={10} onChange={setShapeHeight} />
                 {bgBottomShape !== 'flat' && (
-                  <Range label="Độ sâu uốn/cắt" value={shapeIntensity} min={0} max={300} step={5} onChange={setShapeIntensity} />
+                  <Range label="Độ nghiêng / Uốn cong" value={shapeIntensity} min={0} max={300} step={5} onChange={setShapeIntensity} />
                 )}
               </div>
             </div>
@@ -163,14 +167,13 @@ export default function PosterEditorTool() {
               <ColorInput label="Màu tổng thể" value={themeColor} onChange={setThemeColor} />
               <ColorInput label="Màu chữ" value={textColor} onChange={setTextColor} />
               <div className="col-span-2 border-t border-zinc-200 my-1"></div>
-              <ColorInput label="Màu nền nội dung" value={cardColor} onChange={setCardColor} />
+              <ColorInput label="Màu nền thẻ" value={cardColor} onChange={setCardColor} />
               <ColorInput label="Viền thẻ" value={borderColor} onChange={setBorderColor} />
-              <ColorInput label="Viền ảnh" value={imageBorderColor} onChange={setImageBorderColor} />
             </div>
 
             <Input label="Giá tiền" value={price} onChange={setPrice} />
             <Input label="Tên gói" value={packageTitle} onChange={setPackageTitle} />
-            <Input label="Tên Studio (phụ, có thể xoá)" value={studioName} onChange={setStudioName} />
+            <Input label="Tên Studio (phụ)" value={studioName} onChange={setStudioName} />
 
             <EditableList title="Dịch vụ" items={serviceItems} setItems={setServiceItems} />
             <EditableList title="Sản phẩm" items={productItems} setItems={setProductItems} />
@@ -190,12 +193,12 @@ export default function PosterEditorTool() {
         </section>
 
         <section className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
-          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400 text-center w-full">Xem trước bản kéo dài (Zoom/Kéo ảnh)</div>
+          <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400 text-center w-full">Xem trước (Kéo thả & Zoom)</div>
           
           <div ref={measureRef} className="w-full h-0" />
 
           <div
-            className="relative shadow-2xl border border-zinc-100 bg-white transition-all duration-200 ease-out"
+            className="relative shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-zinc-200 bg-white transition-all duration-200 ease-out"
             style={{ width: POSTER_W * previewScale, height: POSTER_H * previewScale }}
           >
             <div
@@ -278,7 +281,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     const w = POSTER_W; const h = data.shapeHeight; const inst = data.shapeIntensity;
     switch (data.bgBottomShape) {
       case "flat": return `M0,0 H${w} V${h} H0 Z`;
-      case "slant-up": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
+      case "slant-up": return `M0,0 H${w} V${h - inst} L0,${h} Z`; 
       case "slant-down": return `M0,0 H${w} V${h} L0,${h - inst} Z`;
       case "curved": return `M0,0 H${w} V${h - inst} Q${w/2},${h + inst} 0,${h - inst} Z`;
       case "arch": return `M0,0 H${w} V${h} Q${w/2},${h - inst*3} 0,${h} Z`;
@@ -294,18 +297,22 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   const renderW = imgSize.w * baseScale * data.imgTransform.scale;
   const renderH = imgSize.h * baseScale * data.imgTransform.scale;
 
+  const showBorder = data.imageBorderColor !== 'transparent';
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#fcf9f2] font-quicksand">
       <svg className="absolute inset-x-0 top-0" width={POSTER_W} height={data.shapeHeight + 300}>
         <path d={getPathData()} fill={data.themeColor} />
       </svg>
 
+      {/* Box Ảnh */}
       <div 
         ref={imgBoxRef}
-        className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-[0_15px_30px_rgba(0,0,0,0.25)] group touch-none"
+        className="absolute z-10 overflow-hidden rounded-[40px] bg-[#f3efe4] shadow-[0_15px_40px_rgba(0,0,0,0.15)] group touch-none"
         style={{ 
           left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab',
-          borderWidth: '6px', borderColor: data.imageBorderColor
+          borderWidth: showBorder ? '6px' : '0px', 
+          borderColor: data.imageBorderColor
         }}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       >
@@ -333,16 +340,13 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
               <button title="Thu nhỏ" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: Math.max(0.1, p.scale - 0.1)})); }}><ZoomOut size={22}/></button>
               <button title="Khôi phục" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform({x:0, y:0, scale: 1}); }}><RotateCcw size={22}/></button>
             </div>
-            <div className="absolute top-4 left-4 z-50 bg-black/50 px-3 py-1.5 rounded-lg text-white opacity-0 group-hover:opacity-100 transition shadow-lg text-[16px] font-medium flex items-center gap-2">
-               <Move size={18} /> Kéo để di chuyển
-            </div>
           </>
         )}
       </div>
 
-      {/* BẢN FIX: Đẩy padding lên px-[80px] và py-[55px] để lùi nội dung sâu vào trung tâm */}
+      {/* Thẻ Nội Dung Cân Đối */}
       <div 
-        className="absolute z-10 rounded-[44px] flex flex-col px-[80px] py-[55px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
+        className="absolute z-10 rounded-[40px] flex flex-col px-[55px] py-[35px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
         style={{ 
           left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, 
           borderWidth: '5px', borderColor: data.borderColor, backgroundColor: data.cardColor 
@@ -350,21 +354,22 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
       >
         <div className="text-center flex flex-col items-center">
           <div className="text-[96px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
-          <div className="mt-1 text-[64px] font-bold leading-none font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+          <div className="mt-1 text-[64px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
           {data.studioName && (
-            <div className="mt-4 text-[24px] font-bold uppercase tracking-[0.2em] text-zinc-500" style={{ color: data.themeColor }}>{data.studioName}</div>
+            <div className="mt-3 text-[24px] font-bold uppercase tracking-[0.2em] text-zinc-600" style={{ color: data.themeColor }}>{data.studioName}</div>
           )}
         </div>
         
-        <div className="mt-10 flex flex-col gap-8">
+        <div className="mt-8 flex flex-col gap-6">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[28px] font-bold" style={{ top: 1535, color: data.textColor }}>
+      {/* Footer */}
+      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1445, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
-        <div className="mt-6 flex items-center gap-6"> 
+        <div className="mt-4 flex items-center gap-6"> 
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
           <div className="text-zinc-400 px-3">|</div>
           <div className="flex items-center gap-2"><Phone className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.phone}</span></div>
@@ -376,7 +381,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
 
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
-  const h = POSTER_H;
+  const h = POSTER_H; 
   const baseH = data.shapeHeight;
   const inst = data.shapeIntensity;
 
@@ -405,8 +410,8 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   
-  ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
-  ctx.shadowBlur = 30;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+  ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 15;
   ctx.fillStyle = "#f3efe4";
   ctx.fill(); 
@@ -423,17 +428,24 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     const cy = L.imageY + L.imageH / 2 + data.imgTransform.y;
     ctx.drawImage(img, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
   }
-
-  ctx.lineWidth = 12; 
-  ctx.strokeStyle = data.imageBorderColor;
-  ctx.stroke();
   ctx.restore();
 
+  // Vẽ Border rời nếu có
+  if (data.imageBorderColor !== 'transparent') {
+    ctx.save();
+    roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
+    ctx.lineWidth = 12; 
+    ctx.strokeStyle = data.imageBorderColor;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Vẽ thẻ Card
   ctx.save();
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   
-  ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
-  ctx.shadowBlur = 20;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.08)";
+  ctx.shadowBlur = 30;
   ctx.shadowOffsetY = 10;
   
   ctx.fillStyle = data.cardColor; 
@@ -445,39 +457,39 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.stroke();
   ctx.restore();
 
+  // Canvas Text Drawing
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
-  // BẢN FIX CANVAS: Căn chỉnh lại Toạ độ Y xuống một chút do padding trên bị đẩy xuống
   ctx.font = "700 96px 'Fredoka', sans-serif";
-  ctx.fillText(data.price, w/2, L.cardY + 130); // Cũ: 120
+  ctx.fillText(data.price, w/2, L.cardY + 115);
   
   ctx.font = "700 64px 'Fredoka', sans-serif";
-  ctx.fillText(data.packageTitle, w/2, L.cardY + 205); // Cũ: 195
+  ctx.fillText(data.packageTitle, w/2, L.cardY + 195);
 
   if (data.studioName) {
     ctx.font = "700 24px 'Quicksand', sans-serif";
     ctx.letterSpacing = "4px"; 
-    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 255); // Cũ: 245
+    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 245);
     ctx.letterSpacing = "0px";
   }
 
-  // BẢN FIX CANVAS: Thay đổi toạ độ X để chữ thụt vào sâu hơn (tăng từ 60 lên 80)
-  let textY = L.cardY + (data.studioName ? 320 : 280);
-  textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 80, textY, data.themeColor, data.textColor);
-  textY += 20; 
-  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 80, textY, data.themeColor, data.textColor);
+  let textY = L.cardY + (data.studioName ? 300 : 260);
+  // Thụt lề an toàn L.cardX + 70 để không chạm lề
+  textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 70, textY, data.themeColor, data.textColor);
+  textY += 25; 
+  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 70, textY, data.themeColor, data.textColor);
 
   ctx.textAlign = "center";
   ctx.fillStyle = data.textColor;
-  ctx.font = "700 28px 'Quicksand', sans-serif";
+  ctx.font = "700 26px 'Quicksand', sans-serif";
   ctx.fillStyle = data.themeColor;
   
-  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1550);
+  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1465);
   ctx.fillStyle = data.textColor;
-  ctx.fillText(`${data.address}`, w / 2, 1550);
+  ctx.fillText(`${data.address}`, w / 2, 1465);
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
-  ctx.fillText(line2, w / 2, 1615); 
+  ctx.fillText(line2, w / 2, 1515); 
 }
 
 function drawCanvasSection(
@@ -488,14 +500,14 @@ function drawCanvasSection(
   ctx.font = "700 56px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
   y += 45;
-  ctx.font = "700 27px 'Quicksand', sans-serif";
+  ctx.font = "700 28px 'Quicksand', sans-serif";
   for (const item of items) {
     ctx.fillStyle = color;
-    ctx.fillText("•", x, y);
+    ctx.fillText("•", x + 15, y); // Thụt lề dấu chấm
     ctx.fillStyle = textColor;
-    // BẢN FIX CANVAS: Thu hẹp maxWidth xuống 730 để tránh chữ bị tràn ra mép khi padding tăng
-    y = wrapText(ctx, item, x + 30, y, 730, 42); 
-    y += 5; 
+    // Giới hạn chiều rộng chữ = Chiều rộng thẻ - 140px (để thụt lề 2 bên rộng rãi)
+    y = wrapText(ctx, item, x + 40, y, L.cardW - 160, 42); 
+    y += 6; 
   }
   return y;
 }
@@ -529,7 +541,7 @@ function PosterSection({ title, color, textColor, items }: { title: string, colo
   return (
     <div className="text-left font-quicksand">
       <h2 className="text-[56px] font-cursive leading-none" style={{ color }}>{title}</h2>
-      <ul className="mt-2 space-y-2 text-[27px] font-bold leading-snug" style={{ color: textColor }}>
+      <ul className="mt-3 space-y-2 text-[28px] font-bold leading-snug pl-3" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span> <span>{item}</span>
