@@ -9,6 +9,12 @@ type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 const POSTER_W = 800;
 const POSTER_H = 1120;
 
+// Final stable layout notes:
+// - Preview is scaled only by an OUTER wrapper.
+// - Export uses Canvas API, not html2canvas.
+// - Image is exported with real crop math, so it will not stretch/morph.
+// - Footer is fixed near bottom and content card is sized to avoid overlap.
+
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [price, setPrice] = useState("800k");
@@ -42,7 +48,6 @@ export default function PosterEditorTool() {
   const [imageX, setImageX] = useState(50);
   const [imageY, setImageY] = useState(50);
 
-  const posterRef = useRef<HTMLDivElement>(null);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
 
@@ -65,6 +70,7 @@ export default function PosterEditorTool() {
       minimalBlack: ["#111111", "#888888", "#333333", "#ffffff"],
       saleRed: ["#ef4444", "#111111", "#5a2a2a", "#fff7f0"],
     };
+
     const p = presets[type];
     if (!p) return;
     setThemeColor(p[0]);
@@ -86,10 +92,10 @@ export default function PosterEditorTool() {
   };
 
   const addItem = (setList: SetList) => setList((prev) => [...prev, ""]);
-  const removeItem = (list: string[], setList: SetList, index: number) => setList(list.filter((_, i) => i !== index));
+  const removeItem = (list: string[], setList: SetList, index: number) => {
+    setList(list.filter((_, i) => i !== index));
+  };
 
-  // Export bằng Canvas API, không dùng html2canvas.
-  // Cách này fix triệt để lỗi ảnh bị méo và footer bị cắt.
   const downloadPNG = async () => {
     const canvas = document.createElement("canvas");
     canvas.width = POSTER_W * 3;
@@ -99,7 +105,8 @@ export default function PosterEditorTool() {
     if (!ctx) return;
 
     ctx.scale(3, 3);
-    await drawPosterToCanvas(ctx, {
+
+    await drawPosterCanvas(ctx, {
       photo,
       imageFit,
       imageX,
@@ -144,10 +151,16 @@ export default function PosterEditorTool() {
             </label>
 
             <div className="rounded-xl border border-zinc-200 p-3">
-              <h3 className="mb-3 flex items-center gap-2 font-semibold"><Palette className="h-4 w-4" /> Màu & style</h3>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <Palette className="h-4 w-4" /> Màu & style
+              </h3>
 
               <label className="block text-sm font-medium">Preset màu nhanh</label>
-              <select onChange={(e) => applyPreset(e.target.value)} defaultValue="warmBrown" className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2">
+              <select
+                onChange={(e) => applyPreset(e.target.value)}
+                defaultValue="warmBrown"
+                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
+              >
                 <option value="babyGreen">Baby Green</option>
                 <option value="luxuryGold">Luxury Gold</option>
                 <option value="softPink">Soft Pink</option>
@@ -167,7 +180,11 @@ export default function PosterEditorTool() {
             <div className="rounded-xl border border-zinc-200 p-3">
               <h3 className="mb-3 font-semibold">Căn ảnh upload</h3>
               <label className="block text-sm font-medium">Kiểu hiển thị ảnh</label>
-              <select value={imageFit} onChange={(e) => setImageFit(e.target.value as "cover" | "contain")} className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2">
+              <select
+                value={imageFit}
+                onChange={(e) => setImageFit(e.target.value as "cover" | "contain")}
+                className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
+              >
                 <option value="cover">Fill khung đẹp nhất, không méo ảnh</option>
                 <option value="contain">Giữ nguyên ảnh, không crop</option>
               </select>
@@ -191,7 +208,11 @@ export default function PosterEditorTool() {
             <Input label="Facebook" value={facebook} onChange={setFacebook} />
             <Input label="Số điện thoại" value={phone} onChange={setPhone} />
 
-            <button onClick={downloadPNG} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-sm" style={{ backgroundColor: themeColor }}>
+            <button
+              onClick={downloadPNG}
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-sm"
+              style={{ backgroundColor: themeColor }}
+            >
               <Download className="h-5 w-5" /> Xuất PNG
             </button>
           </div>
@@ -202,10 +223,22 @@ export default function PosterEditorTool() {
             Preview tự scale theo màn hình. File xuất dùng Canvas riêng nên không bị méo/cắt.
           </div>
 
-          <div className="mx-auto" style={{ width: POSTER_W * previewScale, height: POSTER_H * previewScale }}>
-            <div style={{ width: POSTER_W, height: POSTER_H, transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
+          <div
+            className="mx-auto"
+            style={{
+              width: POSTER_W * previewScale,
+              height: POSTER_H * previewScale,
+            }}
+          >
+            <div
+              style={{
+                width: POSTER_W,
+                height: POSTER_H,
+                transform: `scale(${previewScale})`,
+                transformOrigin: "top left",
+              }}
+            >
               <PosterPreview
-                refEl={posterRef}
                 photo={photo}
                 imageFit={imageFit}
                 imageX={imageX}
@@ -231,17 +264,28 @@ export default function PosterEditorTool() {
   );
 }
 
-function PosterPreview(props: any) {
-  const {
-    refEl, photo, imageFit, imageX, imageY, price, packageTitle, studioName,
-    serviceItems, productItems, address, facebook, phone,
-    themeColor, borderColor, textColor, cardColor
-  } = props;
-
+function PosterPreview({
+  photo,
+  imageFit,
+  imageX,
+  imageY,
+  price,
+  packageTitle,
+  studioName,
+  serviceItems,
+  productItems,
+  address,
+  facebook,
+  phone,
+  themeColor,
+  borderColor,
+  textColor,
+  cardColor,
+}: PosterData) {
   return (
-    <div ref={refEl} className="relative h-[1120px] w-[800px] overflow-hidden bg-[#f9f4e8]">
+    <div className="relative h-[1120px] w-[800px] overflow-hidden bg-[#f9f4e8]">
       <div className="absolute inset-x-0 top-0 h-[430px]" style={{ backgroundColor: themeColor }} />
-      <div className="absolute -left-28 top-[380px] h-40 w-[500px] rotate-[-18deg] bg-[#f9f4e8]" />
+      <div className="absolute -left-28 top-[382px] h-40 w-[500px] rotate-[-18deg] bg-[#f9f4e8]" />
 
       <div
         className="absolute left-[56px] top-[70px] z-10 h-[330px] w-[688px] overflow-hidden rounded-[32px] bg-zinc-200 shadow-sm"
@@ -253,24 +297,31 @@ function PosterPreview(props: any) {
           backgroundColor: "#f3efe4",
         }}
       >
-        {!photo && <div className="flex h-full items-center justify-center text-zinc-400">Upload ảnh chính</div>}
+        {!photo && (
+          <div className="flex h-full items-center justify-center text-zinc-400">
+            Upload ảnh chính
+          </div>
+        )}
       </div>
 
       <div
-        className="absolute left-[48px] top-[470px] z-10 w-[704px] rounded-[34px] border-[5px] px-[58px] py-[42px]"
+        className="absolute left-[48px] top-[445px] z-10 h-[545px] w-[704px] rounded-[34px] border-[5px] px-[58px] py-[36px]"
         style={{ borderColor, backgroundColor: cardColor }}
       >
         <div className="text-center">
-          <div className="text-[58px] font-black leading-none" style={{ color: themeColor }}>{price}</div>
-          <div className="mt-2 text-[38px] font-black leading-tight" style={{ color: themeColor }}>{packageTitle}</div>
-          <div className="mt-7 text-[24px] font-black uppercase tracking-wide" style={{ color: themeColor }}>{studioName}</div>
+          <div className="text-[56px] font-black leading-none" style={{ color: themeColor }}>{price}</div>
+          <div className="mt-1 text-[35px] font-black leading-tight" style={{ color: themeColor }}>{packageTitle}</div>
+          <div className="mt-5 text-[23px] font-black uppercase tracking-wide" style={{ color: themeColor }}>{studioName}</div>
         </div>
 
         <PosterSection title="Dịch vụ:" color={themeColor} textColor={textColor} items={serviceItems} />
         <PosterSection title="Sản phẩm" color={themeColor} textColor={textColor} items={productItems} />
       </div>
 
-      <div className="absolute bottom-[22px] left-0 right-0 z-20 text-center text-[22px] font-medium leading-snug" style={{ color: themeColor }}>
+      <div
+        className="absolute bottom-[24px] left-0 right-0 z-20 text-center text-[21px] font-medium leading-snug"
+        style={{ color: themeColor }}
+      >
         <div>📍 {address}</div>
         <div className="mt-3">f&nbsp; {facebook} &nbsp; | &nbsp; ☎ {phone}</div>
       </div>
@@ -278,27 +329,26 @@ function PosterPreview(props: any) {
   );
 }
 
-async function drawPosterToCanvas(
-  ctx: CanvasRenderingContext2D,
-  data: {
-    photo: string | null;
-    imageFit: "cover" | "contain";
-    imageX: number;
-    imageY: number;
-    price: string;
-    packageTitle: string;
-    studioName: string;
-    serviceItems: string[];
-    productItems: string[];
-    address: string;
-    facebook: string;
-    phone: string;
-    themeColor: string;
-    borderColor: string;
-    textColor: string;
-    cardColor: string;
-  }
-) {
+type PosterData = {
+  photo: string | null;
+  imageFit: "cover" | "contain";
+  imageX: number;
+  imageY: number;
+  price: string;
+  packageTitle: string;
+  studioName: string;
+  serviceItems: string[];
+  productItems: string[];
+  address: string;
+  facebook: string;
+  phone: string;
+  themeColor: string;
+  borderColor: string;
+  textColor: string;
+  cardColor: string;
+};
+
+async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   ctx.clearRect(0, 0, POSTER_W, POSTER_H);
 
   ctx.fillStyle = "#f9f4e8";
@@ -308,12 +358,13 @@ async function drawPosterToCanvas(
   ctx.fillRect(0, 0, POSTER_W, 430);
 
   ctx.save();
-  ctx.translate(-112, 380);
+  ctx.translate(-112, 382);
   ctx.rotate((-18 * Math.PI) / 180);
   ctx.fillStyle = "#f9f4e8";
   ctx.fillRect(0, 0, 500, 160);
   ctx.restore();
 
+  ctx.save();
   roundRect(ctx, 56, 70, 688, 330, 32);
   ctx.clip();
 
@@ -327,11 +378,16 @@ async function drawPosterToCanvas(
     } else {
       drawImageContain(ctx, img, 56, 70, 688, 330);
     }
+  } else {
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "400 16px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Upload ảnh chính", 400, 238);
   }
 
   ctx.restore();
 
-  roundRect(ctx, 48, 470, 704, 500, 34);
+  roundRect(ctx, 48, 445, 704, 545, 34);
   ctx.fillStyle = data.cardColor;
   ctx.fill();
   ctx.lineWidth = 5;
@@ -340,49 +396,65 @@ async function drawPosterToCanvas(
 
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  ctx.font = "900 58px Arial, sans-serif";
-  ctx.fillText(data.price, 400, 555);
 
-  ctx.font = "900 38px Arial, sans-serif";
-  ctx.fillText(data.packageTitle, 400, 605);
+  ctx.font = "900 56px Arial, sans-serif";
+  ctx.fillText(data.price, 400, 525);
 
-  ctx.font = "900 24px Arial, sans-serif";
-  ctx.fillText(data.studioName.toUpperCase(), 400, 665);
+  ctx.font = "900 35px Arial, sans-serif";
+  ctx.fillText(data.packageTitle, 400, 570);
 
-  let y = 735;
-  y = drawSection(ctx, "Dịch vụ:", data.serviceItems, 130, y, data.themeColor, data.textColor);
-  y += 18;
-  drawSection(ctx, "Sản phẩm", data.productItems, 130, y, data.themeColor, data.textColor);
+  ctx.font = "900 23px Arial, sans-serif";
+  ctx.fillText(data.studioName.toUpperCase(), 400, 625);
+
+  let y = 685;
+  y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, 130, y, data.themeColor, data.textColor);
+  y += 14;
+  drawCanvasSection(ctx, "Sản phẩm", data.productItems, 130, y, data.themeColor, data.textColor);
 
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  ctx.font = "500 22px Arial, sans-serif";
-  ctx.fillText(`📍 ${data.address}`, 400, 1050);
-  ctx.fillText(`f  ${data.facebook}   |   ☎  ${data.phone}`, 400, 1085);
+  ctx.font = "500 21px Arial, sans-serif";
+  ctx.fillText(`📍 ${data.address}`, 400, 1046);
+  ctx.fillText(`f  ${data.facebook}   |   ☎  ${data.phone}`, 400, 1080);
 }
 
-function drawSection(ctx: CanvasRenderingContext2D, title: string, items: string[], x: number, y: number, color: string, textColor: string) {
+function drawCanvasSection(
+  ctx: CanvasRenderingContext2D,
+  title: string,
+  items: string[],
+  x: number,
+  y: number,
+  color: string,
+  textColor: string
+) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  ctx.font = "900 31px Arial, sans-serif";
+  ctx.font = "900 29px Arial, sans-serif";
   ctx.fillText(title, x, y);
 
-  y += 35;
-  ctx.fillStyle = textColor;
-  ctx.font = "800 21px Arial, sans-serif";
+  y += 32;
+  ctx.font = "800 19px Arial, sans-serif";
 
   for (const item of items) {
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
+
     ctx.fillStyle = textColor;
-    y = wrapText(ctx, item, x + 30, y, 540, 26);
-    y += 9;
+    y = wrapText(ctx, item, x + 28, y, 540, 23);
+    y += 6;
   }
 
   return y;
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number
+) {
   const words = text.split(" ");
   let line = "";
 
@@ -402,14 +474,24 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
+    img.onerror = reject;
     img.src = src;
   });
 }
 
-function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, focusX: number, focusY: number) {
+function drawImageCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  focusX: number,
+  focusY: number
+) {
   const imgRatio = img.naturalWidth / img.naturalHeight;
   const boxRatio = w / h;
 
@@ -430,7 +512,14 @@ function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x:
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-function drawImageContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+function drawImageContain(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
   const imgRatio = img.naturalWidth / img.naturalHeight;
   const boxRatio = w / h;
 
@@ -451,7 +540,14 @@ function drawImageContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, 
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -465,11 +561,21 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function PosterSection({ title, color, textColor, items }: { title: string; color: string; textColor: string; items: string[] }) {
+function PosterSection({
+  title,
+  color,
+  textColor,
+  items,
+}: {
+  title: string;
+  color: string;
+  textColor: string;
+  items: string[];
+}) {
   return (
-    <div className="mt-7">
-      <h2 className="text-[31px] font-black leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-3 space-y-2 text-[21px] font-extrabold leading-snug" style={{ color: textColor }}>
+    <div className="mt-6">
+      <h2 className="text-[29px] font-black leading-tight" style={{ color }}>{title}</h2>
+      <ul className="mt-2 space-y-1 text-[19px] font-extrabold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span>
@@ -481,42 +587,106 @@ function PosterSection({ title, color, textColor, items }: { title: string; colo
   );
 }
 
-function Input({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-300" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-300"
+      />
     </label>
   );
 }
 
-function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function ColorInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <label className="block">
       <span className="text-xs font-medium">{label}</span>
-      <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 h-10 w-full cursor-pointer rounded-lg" />
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 h-10 w-full cursor-pointer rounded-lg"
+      />
     </label>
   );
 }
 
-function Range({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (value: number) => void }) {
+function Range({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}) {
   return (
     <label className="block">
       <div className="mb-1 flex justify-between text-sm">
         <span>{label}</span>
         <span className="text-zinc-500">{value.toFixed(0)}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+      />
     </label>
   );
 }
 
-function EditableList({ title, items, setItems, updateItem, addItem, removeItem }: { title: string; items: string[]; setItems: SetList; updateItem: (list: string[], setList: SetList, index: number, value: string) => void; addItem: (setList: SetList) => void; removeItem: (list: string[], setList: SetList, index: number) => void }) {
+function EditableList({
+  title,
+  items,
+  setItems,
+  updateItem,
+  addItem,
+  removeItem,
+}: {
+  title: string;
+  items: string[];
+  setItems: SetList;
+  updateItem: (list: string[], setList: SetList, index: number, value: string) => void;
+  addItem: (setList: SetList) => void;
+  removeItem: (list: string[], setList: SetList, index: number) => void;
+}) {
   return (
     <div className="rounded-xl border border-zinc-200 p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-semibold">{title}</h3>
-        <button onClick={() => addItem(setItems)} className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-1 text-sm hover:bg-zinc-200">
+        <button
+          onClick={() => addItem(setItems)}
+          className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-1 text-sm hover:bg-zinc-200"
+        >
           <Plus className="h-4 w-4" /> Thêm dòng
         </button>
       </div>
@@ -524,8 +694,17 @@ function EditableList({ title, items, setItems, updateItem, addItem, removeItem 
       <div className="space-y-2">
         {items.map((item, idx) => (
           <div key={idx} className="flex gap-2">
-            <input value={item} onChange={(e) => updateItem(items, setItems, idx, e.target.value)} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-300" placeholder={`Dòng ${idx + 1}`} />
-            <button onClick={() => removeItem(items, setItems, idx)} className="rounded-lg border border-zinc-300 px-2 hover:bg-zinc-100" title="Xóa dòng">
+            <input
+              value={item}
+              onChange={(e) => updateItem(items, setItems, idx, e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-300"
+              placeholder={`Dòng ${idx + 1}`}
+            />
+            <button
+              onClick={() => removeItem(items, setItems, idx)}
+              className="rounded-lg border border-zinc-300 px-2 hover:bg-zinc-100"
+              title="Xóa dòng"
+            >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
