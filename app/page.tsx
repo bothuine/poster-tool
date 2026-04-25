@@ -5,8 +5,6 @@ import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone } f
 
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type FitMode = "cover" | "contain";
-
-// Mở rộng thêm nhiều option hình dạng nền
 type BgBottomShape = "flat" | "slant" | "curved" | "wave" | "zigzag" | "ellipse" | "star";
 
 const POSTER_W = 1024;
@@ -14,7 +12,7 @@ const POSTER_H = 1536;
 
 const L = {
   bg: "#fcf9f2",
-  topH: 620, // Chiều cao cơ bản của mảng màu phía trên
+  topH: 620,
 
   imageX: 55,
   imageY: 35,
@@ -61,9 +59,8 @@ export default function PosterEditorTool() {
   const [imageX, setImageX] = useState(50);
   const [imageY, setImageY] = useState(50);
 
-  // State mới cho hình dạng nền
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
-  const [shapeIntensity, setShapeIntensity] = useState(60); // Độ sâu của đường cong/răng cưa
+  const [shapeIntensity, setShapeIntensity] = useState(60);
 
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -99,22 +96,27 @@ export default function PosterEditorTool() {
     link.click();
   };
 
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setPhoto(URL.createObjectURL(file));
+  }
+
   return (
     <main className="min-h-screen bg-zinc-100 p-3 md:p-8 font-quicksand">
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&display=swap');
         .font-cursive { font-family: 'Dancing Script', cursive; }
+        .font-quicksand { font-family: 'Quicksand', sans-serif; }
       `}} />
 
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Thêm nhiều tùy chọn hình dạng nền cao cấp.</p>
+            <p className="text-sm text-zinc-500">Tùy chỉnh hình dạng nền và nội dung.</p>
           </div>
 
           <div className="space-y-4">
-            {/* Tùy chọn Hình dạng nền */}
             <div className="rounded-xl border border-zinc-200 p-3 bg-zinc-50/50">
               <h3 className="mb-3 flex items-center gap-2 font-bold text-zinc-700">
                 <Palette className="h-4 w-4" /> Hình dạng nền bên dưới
@@ -167,6 +169,10 @@ export default function PosterEditorTool() {
             <EditableList title="Dịch vụ" items={serviceItems} setItems={setServiceItems} />
             <EditableList title="Sản phẩm" items={productItems} setItems={setProductItems} />
 
+            <Input label="Địa chỉ" value={address} onChange={setAddress} />
+            <Input label="Facebook" value={facebook} onChange={setFacebook} />
+            <Input label="Số điện thoại" value={phone} onChange={setPhone} />
+
             <button
               onClick={downloadPNG}
               className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-4 font-bold text-white shadow-lg active:scale-95 transition"
@@ -202,11 +208,6 @@ export default function PosterEditorTool() {
       </div>
     </main>
   );
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setPhoto(URL.createObjectURL(file));
-  }
 }
 
 type PosterData = {
@@ -230,7 +231,6 @@ type PosterData = {
   shapeIntensity: number;
 };
 
-// COMPONENT PREVIEW
 function PosterPreview(data: PosterData) {
   const imageBackground = data.photo ? {
     backgroundImage: `url(${data.photo})`,
@@ -239,7 +239,6 @@ function PosterPreview(data: PosterData) {
     backgroundPosition: data.imageFit === "cover" ? `${data.imageX}% ${data.imageY}%` : "center",
   } : {};
 
-  // Hàm tạo Path SVG cho Preview (đồng bộ với Canvas)
   const getPathData = () => {
     const w = POSTER_W;
     const h = L.topH;
@@ -275,8 +274,7 @@ function PosterPreview(data: PosterData) {
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#fcf9f2]">
-      {/* SVG Background Shape */}
+    <div className="relative h-full w-full overflow-hidden bg-[#fcf9f2] font-quicksand">
       <svg className="absolute inset-x-0 top-0" width={POSTER_W} height={L.topH + 300}>
         <path d={getPathData()} fill={data.themeColor} />
       </svg>
@@ -293,23 +291,27 @@ function PosterPreview(data: PosterData) {
           <div className="mt-2 text-[54px] font-black leading-tight uppercase" style={{ color: data.themeColor }}>{data.packageTitle}</div>
         </div>
         <div className="mt-8 flex flex-col gap-6">
-          <PosterSection title="Dịch vụ:" color={data.themeColor} items={data.serviceItems} />
-          <PosterSection title="Sản phẩm:" color={data.themeColor} items={data.productItems} />
+          <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
+          <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1425, color: data.themeColor }}>
-        <div className="flex items-center gap-3"><MapPin className="h-7 w-7" /> {data.address}</div>
+      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1425, color: data.textColor }}>
+        <div className="flex items-center gap-3">
+          <MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> 
+          <span>{data.address}</span>
+        </div>
         <div className="mt-3 flex items-center gap-6">
-          <div className="flex items-center gap-2"><Facebook className="h-7 w-7" /> {data.facebook}</div>
-          <div className="flex items-center gap-2"><Phone className="h-7 w-7" /> {data.phone}</div>
+          <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
+          <div className="text-zinc-400 px-2">|</div>
+          <div className="flex items-center gap-2"><Phone className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.phone}</span></div>
         </div>
       </div>
     </div>
   );
 }
 
-// CANVAS DRAWING (XUẤT FILE)
+// CANVAS DRAWING (XUẤT FILE ĐÃ FIX LỖI MẤT CHỮ)
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
   const h = POSTER_H;
@@ -319,7 +321,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, w, h);
 
-  // Vẽ Shape nền bằng Canvas API
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(0, 0);
@@ -361,37 +362,123 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fill();
   ctx.restore();
 
-  // Vẽ Ảnh
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   ctx.clip();
+  ctx.fillStyle = "#f3efe4";
+  ctx.fillRect(L.imageX, L.imageY, L.imageW, L.imageH);
   if (data.photo) {
     const img = await loadImage(data.photo);
-    drawImageCover(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH, data.imageX/100, data.imageY/100);
+    if (data.imageFit === "cover") {
+      drawImageCover(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH, data.imageX/100, data.imageY/100);
+    } else {
+      drawImageContain(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH);
+    }
   }
   ctx.restore();
 
-  // Vẽ Card & Text (Tương tự logic cũ nhưng dùng Quicksand)
+  // Vẽ Khung Card
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   ctx.fillStyle = data.cardColor; ctx.fill();
   ctx.lineWidth = 5; ctx.strokeStyle = data.borderColor; ctx.stroke();
 
+  // ĐÃ KHÔI PHỤC: Vẽ Nội dung Text vào Canvas
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  ctx.font = "900 82px Quicksand";
-  ctx.fillText(data.price, w/2, L.cardY + 110);
-  ctx.font = "900 54px Quicksand";
-  ctx.fillText(data.packageTitle.toUpperCase(), w/2, L.cardY + 180);
+  
+  ctx.font = "900 82px 'Quicksand', sans-serif";
+  ctx.fillText(data.price, w/2, L.cardY + 115);
+  
+  ctx.font = "900 54px 'Quicksand', sans-serif";
+  ctx.fillText(data.packageTitle.toUpperCase(), w/2, L.cardY + 185);
 
-  // ... Vẽ tiếp các section dịch vụ và sản phẩm tương tự các bản trước ...
+  let textY = L.cardY + 280;
+  textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, textY, data.themeColor, data.textColor);
+  textY += 20; 
+  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
+
+  // Vẽ Footer Canvas
+  ctx.textAlign = "center";
+  ctx.fillStyle = data.textColor;
+  ctx.font = "700 26px 'Quicksand', sans-serif";
+  
+  ctx.fillStyle = data.themeColor;
+  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1450);
+  ctx.fillStyle = data.textColor;
+  ctx.fillText(`${data.address}`, w / 2, 1450);
+  
+  const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
+  ctx.fillText(line2, w / 2, 1500);
 }
 
-// HELPER COMPONENTS
-function PosterSection({ title, color, items }: { title: string, color: string, items: string[] }) {
+function drawCanvasSection(
+  ctx: CanvasRenderingContext2D, title: string, items: string[], x: number, y: number, color: string, textColor: string
+) {
+  ctx.textAlign = "left";
+  ctx.fillStyle = color;
+  ctx.font = "700 54px 'Dancing Script', cursive, sans-serif";
+  ctx.fillText(title, x, y);
+
+  y += 45;
+  ctx.font = "700 28px 'Quicksand', sans-serif";
+
+  for (const item of items) {
+    ctx.fillStyle = color;
+    ctx.fillText("•", x, y);
+    ctx.fillStyle = textColor;
+    y = wrapText(ctx, item, x + 30, y, 760, 42);
+    y += 8; 
+  }
+  return y;
+}
+
+function wrapText(
+  ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number
+) {
+  const words = text.split(" ");
+  let line = "";
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + " ";
+    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+      ctx.fillText(line.trim(), x, y);
+      line = words[i] + " ";
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line.trim(), x, y);
+  return y + lineHeight; 
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+}
+
+function drawImageCover(ctx: any, img: any, x: number, y: number, w: number, h: number, fx: number, fy: number) {
+  const r = img.width/img.height, br = w/h;
+  let sw = img.width, sh = img.height;
+  if (r > br) sw = sh * br; else sh = sw / br;
+  const sx = (img.width - sw) * fx, sy = (img.height - sh) * fy;
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
+function drawImageContain(ctx: any, img: any, x: number, y: number, w: number, h: number) {
+  const r = img.width/img.height, br = w/h;
+  let dw = w, dh = h;
+  if (r > br) dh = w / r; else dw = h * r;
+  ctx.drawImage(img, x + (w - dw)/2, y + (h - dh)/2, dw, dh);
+}
+
+function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r); ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h); ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r); ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
+}
+
+function PosterSection({ title, color, textColor, items }: { title: string, color: string, textColor: string, items: string[] }) {
   return (
-    <div className="text-left">
-      <h2 className="text-[52px] font-cursive leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-2 space-y-2 text-[27px] font-bold text-zinc-700">
+    <div className="text-left font-quicksand">
+      <h2 className="text-[54px] font-cursive leading-tight" style={{ color }}>{title}</h2>
+      <ul className="mt-2 space-y-2 text-[28px] font-bold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span> <span>{item}</span>
@@ -454,19 +541,4 @@ function EditableList({ title, items, setItems }: { title: string, items: string
       </div>
     </div>
   );
-}
-
-// CÁC HÀM HỖ TRỢ CANVAS (Lấy từ bản trước)
-function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r); ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h); ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r); ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
-}
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-}
-function drawImageCover(ctx: any, img: any, x: number, y: number, w: number, h: number, fx: number, fy: number) {
-  const r = img.width/img.height, br = w/h;
-  let sw = img.width, sh = img.height;
-  if (r > br) sw = sh * br; else sh = sw / br;
-  const sx = (img.width - sw) * fx, sy = (img.height - sh) * fy;
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
