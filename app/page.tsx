@@ -116,7 +116,7 @@ export default function PosterEditorTool() {
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Bố cục mở rộng, tương tác mượt mà.</p>
+            <p className="text-sm text-zinc-500">Bố cục mở rộng, padding thanh lịch.</p>
           </div>
 
           <div className="space-y-4">
@@ -279,7 +279,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     switch (data.bgBottomShape) {
       case "flat": return `M0,0 H${w} V${h} H0 Z`;
       case "slant-up": return `M0,0 H${w} V${h - inst} L0,${h} Z`;
-      case "slant-down": return `M0,0 H${w} V${h} L0,${h - inst} Z`; // Xéo cao bên trái, thấp bên phải
+      case "slant-down": return `M0,0 H${w} V${h} L0,${h - inst} Z`;
       case "curved": return `M0,0 H${w} V${h - inst} Q${w/2},${h + inst} 0,${h - inst} Z`;
       case "arch": return `M0,0 H${w} V${h} Q${w/2},${h - inst*3} 0,${h} Z`;
       case "ellipse": return `M0,0 H${w} V${h} A${w/2},${inst} 0 0,1 0,${h} Z`;
@@ -340,9 +340,9 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         )}
       </div>
 
-      {/* Thẻ nội dung được kéo dài */}
+      {/* BẢN FIX: Đẩy padding lên px-[80px] và py-[55px] để lùi nội dung sâu vào trung tâm */}
       <div 
-        className="absolute z-10 rounded-[44px] flex flex-col px-[60px] py-[40px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
+        className="absolute z-10 rounded-[44px] flex flex-col px-[80px] py-[55px] shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
         style={{ 
           left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, 
           borderWidth: '5px', borderColor: data.borderColor, backgroundColor: data.cardColor 
@@ -362,10 +362,9 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         </div>
       </div>
 
-      {/* TĂNG KHOẢNG CÁCH DÒNG FOOTER */}
       <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[28px] font-bold" style={{ top: 1535, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
-        <div className="mt-6 flex items-center gap-6"> {/* Tăng mt-4 thành mt-6 để dãn khoảng cách */}
+        <div className="mt-6 flex items-center gap-6"> 
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
           <div className="text-zinc-400 px-3">|</div>
           <div className="flex items-center gap-2"><Phone className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.phone}</span></div>
@@ -377,7 +376,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
 
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
-  const h = POSTER_H; // Chiều cao mới 1640
+  const h = POSTER_H;
   const baseH = data.shapeHeight;
   const inst = data.shapeIntensity;
 
@@ -449,25 +448,26 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
+  // BẢN FIX CANVAS: Căn chỉnh lại Toạ độ Y xuống một chút do padding trên bị đẩy xuống
   ctx.font = "700 96px 'Fredoka', sans-serif";
-  ctx.fillText(data.price, w/2, L.cardY + 120);
+  ctx.fillText(data.price, w/2, L.cardY + 130); // Cũ: 120
   
   ctx.font = "700 64px 'Fredoka', sans-serif";
-  ctx.fillText(data.packageTitle, w/2, L.cardY + 195);
+  ctx.fillText(data.packageTitle, w/2, L.cardY + 205); // Cũ: 195
 
   if (data.studioName) {
     ctx.font = "700 24px 'Quicksand', sans-serif";
     ctx.letterSpacing = "4px"; 
-    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 245);
+    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 255); // Cũ: 245
     ctx.letterSpacing = "0px";
   }
 
-  let textY = L.cardY + (data.studioName ? 310 : 270);
-  textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, textY, data.themeColor, data.textColor);
+  // BẢN FIX CANVAS: Thay đổi toạ độ X để chữ thụt vào sâu hơn (tăng từ 60 lên 80)
+  let textY = L.cardY + (data.studioName ? 320 : 280);
+  textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 80, textY, data.themeColor, data.textColor);
   textY += 20; 
-  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
+  drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 80, textY, data.themeColor, data.textColor);
 
-  // ĐỒNG BỘ KHOẢNG CÁCH FOOTER Ở CANVAS (Tăng y-gap lên 65px)
   ctx.textAlign = "center";
   ctx.fillStyle = data.textColor;
   ctx.font = "700 28px 'Quicksand', sans-serif";
@@ -477,7 +477,7 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = data.textColor;
   ctx.fillText(`${data.address}`, w / 2, 1550);
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
-  ctx.fillText(line2, w / 2, 1615); // Dãn khoảng cách dòng thứ 2 xuống thấp hơn
+  ctx.fillText(line2, w / 2, 1615); 
 }
 
 function drawCanvasSection(
@@ -493,7 +493,8 @@ function drawCanvasSection(
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
     ctx.fillStyle = textColor;
-    y = wrapText(ctx, item, x + 25, y, 780, 42); 
+    // BẢN FIX CANVAS: Thu hẹp maxWidth xuống 730 để tránh chữ bị tràn ra mép khi padding tăng
+    y = wrapText(ctx, item, x + 30, y, 730, 42); 
     y += 5; 
   }
   return y;
