@@ -5,26 +5,42 @@ import React, { useEffect, useRef, useState } from "react";
 import { Download, ImagePlus, Plus, Trash2, Palette } from "lucide-react";
 
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
+type FitMode = "cover" | "contain";
 
 const POSTER_W = 800;
 const POSTER_H = 1120;
 
-// Final stable layout notes:
-// - Preview is scaled only by an OUTER wrapper.
-// - Export uses Canvas API, not html2canvas.
-// - Image is exported with real crop math, so it will not stretch/morph.
-// - Footer is fixed near bottom and content card is sized to avoid overlap.
+// Layout chuẩn theo mẫu gốc 800x1120
+const L = {
+  bg: "#f9f4e8",
+  topH: 470,
+  imageX: 56,
+  imageY: 24,
+  imageW: 688,
+  imageH: 430,
+  imageR: 32,
+
+  cardX: 44,
+  cardY: 500,
+  cardW: 712,
+  cardH: 520,
+  cardR: 34,
+
+  footerY1: 1060,
+  footerY2: 1092,
+};
 
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [price, setPrice] = useState("800k");
+  const [price, setPrice] = useState("2299k");
   const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
   const [studioName, setStudioName] = useState("SON BABY STUDIO");
 
   const [serviceItems, setServiceItems] = useState([
     "Chụp tại Phim trường Son Studio",
-    "2 Bối cảnh chụp",
-    "Hỗ trợ 1 trang phục cho bé yêu",
+    "3 Bối cảnh chụp",
+    "Hỗ trợ 2 trang phục cho bé yêu và ba mẹ",
+    "Hỗ trợ chụp cùng ba mẹ",
   ]);
 
   const [productItems, setProductItems] = useState([
@@ -39,12 +55,12 @@ export default function PosterEditorTool() {
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
-  const [themeColor, setThemeColor] = useState("#8b5e3c");
-  const [borderColor, setBorderColor] = useState("#c89f68");
-  const [textColor, setTextColor] = useState("#5c3b24");
-  const [cardColor, setCardColor] = useState("#fff7ed");
+  const [themeColor, setThemeColor] = useState("#57903f");
+  const [borderColor, setBorderColor] = useState("#57903f");
+  const [textColor, setTextColor] = useState("#6a3f25");
+  const [cardColor, setCardColor] = useState("#fffaf0");
 
-  const [imageFit, setImageFit] = useState<"cover" | "contain">("cover");
+  const [imageFit, setImageFit] = useState<FitMode>("cover");
   const [imageX, setImageX] = useState(50);
   const [imageY, setImageY] = useState(50);
 
@@ -56,6 +72,7 @@ export default function PosterEditorTool() {
       if (!previewWrapRef.current) return;
       setPreviewScale(Math.min(1, previewWrapRef.current.clientWidth / POSTER_W));
     };
+
     resizePreview();
     window.addEventListener("resize", resizePreview);
     return () => window.removeEventListener("resize", resizePreview);
@@ -131,6 +148,25 @@ export default function PosterEditorTool() {
     link.click();
   };
 
+  const data = {
+    photo,
+    imageFit,
+    imageX,
+    imageY,
+    price,
+    packageTitle,
+    studioName,
+    serviceItems: serviceItems.filter(Boolean),
+    productItems: productItems.filter(Boolean),
+    address,
+    facebook,
+    phone,
+    themeColor,
+    borderColor,
+    textColor,
+    cardColor,
+  };
+
   return (
     <main className="min-h-screen bg-zinc-100 p-3 md:p-8">
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
@@ -158,7 +194,7 @@ export default function PosterEditorTool() {
               <label className="block text-sm font-medium">Preset màu nhanh</label>
               <select
                 onChange={(e) => applyPreset(e.target.value)}
-                defaultValue="warmBrown"
+                defaultValue="babyGreen"
                 className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
               >
                 <option value="babyGreen">Baby Green</option>
@@ -182,7 +218,7 @@ export default function PosterEditorTool() {
               <label className="block text-sm font-medium">Kiểu hiển thị ảnh</label>
               <select
                 value={imageFit}
-                onChange={(e) => setImageFit(e.target.value as "cover" | "contain")}
+                onChange={(e) => setImageFit(e.target.value as FitMode)}
                 className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
               >
                 <option value="cover">Fill khung đẹp nhất, không méo ảnh</option>
@@ -220,7 +256,7 @@ export default function PosterEditorTool() {
 
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4">
           <div className="mb-3 text-sm text-zinc-500">
-            Preview tự scale theo màn hình. File xuất dùng Canvas riêng nên không bị méo/cắt.
+            Preview tự scale theo màn hình. File xuất giữ layout gốc và không méo ảnh.
           </div>
 
           <div
@@ -238,24 +274,7 @@ export default function PosterEditorTool() {
                 transformOrigin: "top left",
               }}
             >
-              <PosterPreview
-                photo={photo}
-                imageFit={imageFit}
-                imageX={imageX}
-                imageY={imageY}
-                price={price}
-                packageTitle={packageTitle}
-                studioName={studioName}
-                serviceItems={serviceItems.filter(Boolean)}
-                productItems={productItems.filter(Boolean)}
-                address={address}
-                facebook={facebook}
-                phone={phone}
-                themeColor={themeColor}
-                borderColor={borderColor}
-                textColor={textColor}
-                cardColor={cardColor}
-              />
+              <PosterPreview {...data} />
             </div>
           </div>
         </section>
@@ -264,74 +283,9 @@ export default function PosterEditorTool() {
   );
 }
 
-function PosterPreview({
-  photo,
-  imageFit,
-  imageX,
-  imageY,
-  price,
-  packageTitle,
-  studioName,
-  serviceItems,
-  productItems,
-  address,
-  facebook,
-  phone,
-  themeColor,
-  borderColor,
-  textColor,
-  cardColor,
-}: PosterData) {
-  return (
-    <div className="relative h-[1120px] w-[800px] overflow-hidden bg-[#f9f4e8]">
-      <div className="absolute inset-x-0 top-0 h-[430px]" style={{ backgroundColor: themeColor }} />
-      <div className="absolute -left-28 top-[382px] h-40 w-[500px] rotate-[-18deg] bg-[#f9f4e8]" />
-
-      <div
-        className="absolute left-[56px] top-[70px] z-10 h-[330px] w-[688px] overflow-hidden rounded-[32px] bg-zinc-200 shadow-sm"
-        style={{
-          backgroundImage: photo ? `url(${photo})` : "none",
-          backgroundSize: imageFit === "cover" ? "cover" : "contain",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: imageFit === "cover" ? `${imageX}% ${imageY}%` : "center",
-          backgroundColor: "#f3efe4",
-        }}
-      >
-        {!photo && (
-          <div className="flex h-full items-center justify-center text-zinc-400">
-            Upload ảnh chính
-          </div>
-        )}
-      </div>
-
-      <div
-        className="absolute left-[48px] top-[445px] z-10 h-[545px] w-[704px] rounded-[34px] border-[5px] px-[58px] py-[36px]"
-        style={{ borderColor, backgroundColor: cardColor }}
-      >
-        <div className="text-center">
-          <div className="text-[56px] font-black leading-none" style={{ color: themeColor }}>{price}</div>
-          <div className="mt-1 text-[35px] font-black leading-tight" style={{ color: themeColor }}>{packageTitle}</div>
-          <div className="mt-5 text-[23px] font-black uppercase tracking-wide" style={{ color: themeColor }}>{studioName}</div>
-        </div>
-
-        <PosterSection title="Dịch vụ:" color={themeColor} textColor={textColor} items={serviceItems} />
-        <PosterSection title="Sản phẩm" color={themeColor} textColor={textColor} items={productItems} />
-      </div>
-
-      <div
-        className="absolute bottom-[24px] left-0 right-0 z-20 text-center text-[21px] font-medium leading-snug"
-        style={{ color: themeColor }}
-      >
-        <div>📍 {address}</div>
-        <div className="mt-3">f&nbsp; {facebook} &nbsp; | &nbsp; ☎ {phone}</div>
-      </div>
-    </div>
-  );
-}
-
 type PosterData = {
   photo: string | null;
-  imageFit: "cover" | "contain";
+  imageFit: FitMode;
   imageX: number;
   imageY: number;
   price: string;
@@ -348,46 +302,110 @@ type PosterData = {
   cardColor: string;
 };
 
+function PosterPreview(data: PosterData) {
+  const imageBackground = data.photo
+    ? {
+        backgroundImage: `url(${data.photo})`,
+        backgroundSize: data.imageFit === "cover" ? "cover" : "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: data.imageFit === "cover" ? `${data.imageX}% ${data.imageY}%` : "center",
+      }
+    : {};
+
+  return (
+    <div className="relative h-[1120px] w-[800px] overflow-hidden bg-[#f9f4e8]">
+      <div className="absolute inset-x-0 top-0 h-[470px]" style={{ backgroundColor: data.themeColor }} />
+      <div className="absolute -left-[120px] top-[432px] h-[170px] w-[520px] rotate-[-18deg] bg-[#f9f4e8]" />
+
+      <div
+        className="absolute z-10 overflow-hidden rounded-[32px] bg-[#f3efe4] shadow-sm"
+        style={{
+          left: L.imageX,
+          top: L.imageY,
+          width: L.imageW,
+          height: L.imageH,
+          ...imageBackground,
+        }}
+      >
+        {!data.photo && (
+          <div className="flex h-full items-center justify-center text-zinc-400">
+            Upload ảnh chính
+          </div>
+        )}
+      </div>
+
+      <div
+        className="absolute z-10 rounded-[34px] border-[5px] px-[58px] py-[38px]"
+        style={{
+          left: L.cardX,
+          top: L.cardY,
+          width: L.cardW,
+          height: L.cardH,
+          borderColor: data.borderColor,
+          backgroundColor: data.cardColor,
+        }}
+      >
+        <div className="text-center">
+          <div className="text-[56px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
+          <div className="mt-1 text-[35px] font-black leading-tight" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+          <div className="mt-5 text-[23px] font-black uppercase tracking-wide" style={{ color: data.themeColor }}>{data.studioName}</div>
+        </div>
+
+        <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
+        <PosterSection title="Sản phẩm" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
+      </div>
+
+      <div
+        className="absolute left-0 right-0 z-20 text-center text-[21px] font-medium leading-snug"
+        style={{ top: 1046, color: data.themeColor }}
+      >
+        <div>📍 {data.address}</div>
+        <div className="mt-3">f&nbsp; {data.facebook} &nbsp; | &nbsp; ☎ {data.phone}</div>
+      </div>
+    </div>
+  );
+}
+
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   ctx.clearRect(0, 0, POSTER_W, POSTER_H);
 
-  ctx.fillStyle = "#f9f4e8";
+  ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, POSTER_W, POSTER_H);
 
   ctx.fillStyle = data.themeColor;
-  ctx.fillRect(0, 0, POSTER_W, 430);
+  ctx.fillRect(0, 0, POSTER_W, L.topH);
 
   ctx.save();
-  ctx.translate(-112, 382);
+  ctx.translate(-120, 432);
   ctx.rotate((-18 * Math.PI) / 180);
-  ctx.fillStyle = "#f9f4e8";
-  ctx.fillRect(0, 0, 500, 160);
+  ctx.fillStyle = L.bg;
+  ctx.fillRect(0, 0, 520, 170);
   ctx.restore();
 
   ctx.save();
-  roundRect(ctx, 56, 70, 688, 330, 32);
+  roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   ctx.clip();
 
   ctx.fillStyle = "#f3efe4";
-  ctx.fillRect(56, 70, 688, 330);
+  ctx.fillRect(L.imageX, L.imageY, L.imageW, L.imageH);
 
   if (data.photo) {
     const img = await loadImage(data.photo);
     if (data.imageFit === "cover") {
-      drawImageCover(ctx, img, 56, 70, 688, 330, data.imageX / 100, data.imageY / 100);
+      drawImageCover(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH, data.imageX / 100, data.imageY / 100);
     } else {
-      drawImageContain(ctx, img, 56, 70, 688, 330);
+      drawImageContain(ctx, img, L.imageX, L.imageY, L.imageW, L.imageH);
     }
   } else {
     ctx.fillStyle = "#9ca3af";
     ctx.font = "400 16px Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Upload ảnh chính", 400, 238);
+    ctx.fillText("Upload ảnh chính", 400, 245);
   }
 
   ctx.restore();
 
-  roundRect(ctx, 48, 445, 704, 545, 34);
+  roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   ctx.fillStyle = data.cardColor;
   ctx.fill();
   ctx.lineWidth = 5;
@@ -398,15 +416,15 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = data.themeColor;
 
   ctx.font = "900 56px Arial, sans-serif";
-  ctx.fillText(data.price, 400, 525);
+  ctx.fillText(data.price, 400, 580);
 
   ctx.font = "900 35px Arial, sans-serif";
-  ctx.fillText(data.packageTitle, 400, 570);
+  ctx.fillText(data.packageTitle, 400, 625);
 
   ctx.font = "900 23px Arial, sans-serif";
-  ctx.fillText(data.studioName.toUpperCase(), 400, 625);
+  ctx.fillText(data.studioName.toUpperCase(), 400, 680);
 
-  let y = 685;
+  let y = 735;
   y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, 130, y, data.themeColor, data.textColor);
   y += 14;
   drawCanvasSection(ctx, "Sản phẩm", data.productItems, 130, y, data.themeColor, data.textColor);
@@ -414,8 +432,8 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   ctx.font = "500 21px Arial, sans-serif";
-  ctx.fillText(`📍 ${data.address}`, 400, 1046);
-  ctx.fillText(`f  ${data.facebook}   |   ☎  ${data.phone}`, 400, 1080);
+  ctx.fillText(`📍 ${data.address}`, 400, 1063);
+  ctx.fillText(`f  ${data.facebook}   |   ☎  ${data.phone}`, 400, 1096);
 }
 
 function drawCanvasSection(
@@ -433,7 +451,7 @@ function drawCanvasSection(
   ctx.fillText(title, x, y);
 
   y += 32;
-  ctx.font = "800 19px Arial, sans-serif";
+  ctx.font = "800 20px Arial, sans-serif";
 
   for (const item of items) {
     ctx.fillStyle = color;
@@ -441,7 +459,7 @@ function drawCanvasSection(
 
     ctx.fillStyle = textColor;
     y = wrapText(ctx, item, x + 28, y, 540, 23);
-    y += 6;
+    y += 7;
   }
 
   return y;
@@ -575,7 +593,7 @@ function PosterSection({
   return (
     <div className="mt-6">
       <h2 className="text-[29px] font-black leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-2 space-y-1 text-[19px] font-extrabold leading-snug" style={{ color: textColor }}>
+      <ul className="mt-2 space-y-1 text-[20px] font-extrabold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span>
