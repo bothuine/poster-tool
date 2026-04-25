@@ -6,22 +6,22 @@ import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone, Zo
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type BgBottomShape = "flat" | "slant-up" | "slant-down" | "curved" | "wave" | "zigzag" | "ellipse" | "star" | "arch";
 
-// Kích thước tỷ lệ chuẩn 2:3 (Perfect Ratio)
+// Kích thước tỷ lệ chuẩn 2:3
 const POSTER_W = 1024;
 const POSTER_H = 1536; 
 
-// Hệ toạ độ chuẩn xác 100% theo ảnh mẫu
+// BẢN FIX TOÁN HỌC: Cân đối hoàn hảo giữa Ảnh và Thẻ nội dung
 const L = {
   bg: "#fcf9f2",
   imageX: 48,
   imageY: 48,  
   imageW: 928,
-  imageH: 580, 
+  imageH: 520, // Thu gọn ảnh lại một chút để nhường chỗ
   imageR: 40,
   cardX: 48,
-  cardY: 660,  
+  cardY: 600,  // Kéo thẻ lên cao
   cardW: 928,
-  cardH: 740,  
+  cardH: 840,  // Tăng mạnh chiều cao thẻ (thêm 100px) để chữ không bao giờ bị tràn
   cardR: 40,
 };
 
@@ -56,10 +56,8 @@ export default function PosterEditorTool() {
   const [borderColor, setBorderColor] = useState("#628b55");
   const [cardColor, setCardColor] = useState("#fcf9f2");
   
-  // Mặc định viền ảnh trong suốt để giống 100% mẫu
   const [imageBorderColor, setImageBorderColor] = useState("transparent");
 
-  // Thiết lập hình khối mặc định cắt xéo chuẩn mẫu (Slant-up)
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("slant-up");
   const [shapeHeight, setShapeHeight] = useState(560); 
   const [shapeIntensity, setShapeIntensity] = useState(180);
@@ -122,7 +120,7 @@ export default function PosterEditorTool() {
         <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit space-y-5">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">Poster Pro Editor</h1>
-            <p className="text-sm text-zinc-500">Tỷ lệ vàng 2:3, bố cục hoàn hảo.</p>
+            <p className="text-sm text-zinc-500">Đã sửa lỗi tràn khung chữ.</p>
           </div>
 
           <div className="space-y-4">
@@ -305,7 +303,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         <path d={getPathData()} fill={data.themeColor} />
       </svg>
 
-      {/* Box Ảnh */}
       <div 
         ref={imgBoxRef}
         className="absolute z-10 overflow-hidden rounded-[40px] bg-[#f3efe4] shadow-[0_15px_40px_rgba(0,0,0,0.15)] group touch-none"
@@ -344,32 +341,31 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         )}
       </div>
 
-      {/* Thẻ Nội Dung Cân Đối */}
       <div 
-        className="absolute z-10 rounded-[40px] flex flex-col px-[55px] py-[35px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+        className="absolute z-10 rounded-[40px] flex flex-col px-[60px] py-[50px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
         style={{ 
           left: L.cardX, top: L.cardY, width: L.cardW, height: L.cardH, 
           borderWidth: '5px', borderColor: data.borderColor, backgroundColor: data.cardColor 
         }}
       >
         <div className="text-center flex flex-col items-center">
-          <div className="text-[96px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
-          <div className="mt-1 text-[64px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+          <div className="text-[90px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
+          <div className="mt-1 text-[60px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
           {data.studioName && (
             <div className="mt-3 text-[24px] font-bold uppercase tracking-[0.2em] text-zinc-600" style={{ color: data.themeColor }}>{data.studioName}</div>
           )}
         </div>
         
-        <div className="mt-8 flex flex-col gap-6">
+        <div className="mt-6 flex flex-col gap-6">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1445, color: data.textColor }}>
+      {/* Footer Y Position set neatly below the card */}
+      <div className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-bold" style={{ top: 1465, color: data.textColor }}>
         <div className="flex items-center gap-3"><MapPin className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.address}</span></div>
-        <div className="mt-4 flex items-center gap-6"> 
+        <div className="mt-3 flex items-center gap-6"> 
           <div className="flex items-center gap-2"><Facebook className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.facebook}</span></div>
           <div className="text-zinc-400 px-3">|</div>
           <div className="flex items-center gap-2"><Phone className="h-7 w-7" style={{ color: data.themeColor }} /> <span>{data.phone}</span></div>
@@ -430,7 +426,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   }
   ctx.restore();
 
-  // Vẽ Border rời nếu có
   if (data.imageBorderColor !== 'transparent') {
     ctx.save();
     roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
@@ -440,7 +435,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     ctx.restore();
   }
 
-  // Vẽ thẻ Card
   ctx.save();
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   
@@ -457,27 +451,26 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.stroke();
   ctx.restore();
 
-  // Canvas Text Drawing
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
   
-  ctx.font = "700 96px 'Fredoka', sans-serif";
-  ctx.fillText(data.price, w/2, L.cardY + 115);
+  // Đồng bộ y coordinates với HTML thẻ mới
+  ctx.font = "700 90px 'Fredoka', sans-serif";
+  ctx.fillText(data.price, w/2, L.cardY + 130);
   
-  ctx.font = "700 64px 'Fredoka', sans-serif";
-  ctx.fillText(data.packageTitle, w/2, L.cardY + 195);
+  ctx.font = "700 60px 'Fredoka', sans-serif";
+  ctx.fillText(data.packageTitle, w/2, L.cardY + 205);
 
   if (data.studioName) {
     ctx.font = "700 24px 'Quicksand', sans-serif";
     ctx.letterSpacing = "4px"; 
-    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 245);
+    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 250);
     ctx.letterSpacing = "0px";
   }
 
-  let textY = L.cardY + (data.studioName ? 300 : 260);
-  // Thụt lề an toàn L.cardX + 70 để không chạm lề
+  let textY = L.cardY + (data.studioName ? 310 : 270);
   textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 70, textY, data.themeColor, data.textColor);
-  textY += 25; 
+  textY += 24; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 70, textY, data.themeColor, data.textColor);
 
   ctx.textAlign = "center";
@@ -485,11 +478,11 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.font = "700 26px 'Quicksand', sans-serif";
   ctx.fillStyle = data.themeColor;
   
-  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1465);
+  ctx.fillText(`📍`, w / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1485);
   ctx.fillStyle = data.textColor;
-  ctx.fillText(`${data.address}`, w / 2, 1465);
+  ctx.fillText(`${data.address}`, w / 2, 1485);
   const line2 = `f   ${data.facebook}     |     ☎   ${data.phone}`;
-  ctx.fillText(line2, w / 2, 1515); 
+  ctx.fillText(line2, w / 2, 1525); 
 }
 
 function drawCanvasSection(
@@ -497,16 +490,15 @@ function drawCanvasSection(
 ) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  ctx.font = "700 56px 'Dancing Script', cursive, sans-serif";
+  ctx.font = "700 50px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
-  y += 45;
-  ctx.font = "700 28px 'Quicksand', sans-serif";
+  y += 40;
+  ctx.font = "700 26px 'Quicksand', sans-serif";
   for (const item of items) {
     ctx.fillStyle = color;
-    ctx.fillText("•", x + 15, y); // Thụt lề dấu chấm
+    ctx.fillText("•", x + 15, y); 
     ctx.fillStyle = textColor;
-    // Giới hạn chiều rộng chữ = Chiều rộng thẻ - 140px (để thụt lề 2 bên rộng rãi)
-    y = wrapText(ctx, item, x + 40, y, L.cardW - 160, 42); 
+    y = wrapText(ctx, item, x + 40, y, L.cardW - 140, 38); 
     y += 6; 
   }
   return y;
@@ -540,8 +532,8 @@ function roundRect(ctx: any, x: number, y: number, w: number, h: number, r: numb
 function PosterSection({ title, color, textColor, items }: { title: string, color: string, textColor: string, items: string[] }) {
   return (
     <div className="text-left font-quicksand">
-      <h2 className="text-[56px] font-cursive leading-none" style={{ color }}>{title}</h2>
-      <ul className="mt-3 space-y-2 text-[28px] font-bold leading-snug pl-3" style={{ color: textColor }}>
+      <h2 className="text-[50px] font-cursive leading-none" style={{ color }}>{title}</h2>
+      <ul className="mt-3 space-y-1.5 text-[26px] font-bold leading-snug pl-3" style={{ color: textColor }}>
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span> <span>{item}</span>
