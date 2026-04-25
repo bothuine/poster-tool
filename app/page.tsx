@@ -10,13 +10,15 @@ type FitMode = "cover" | "contain";
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
-// Cấu trúc Layout mới chuẩn theo mẫu
+// Cấu trúc Layout
 const L = {
   bg: "#fcf9f2",
   
-  // Thông số cắt xéo nền xanh
-  topH_left: 640,
-  topH_right: 440, 
+  // Thông số mảng cong nền xanh (Bezier Curve)
+  curveLY: 660,   // Điểm neo bên trái
+  curveRY: 420,   // Điểm neo bên phải
+  curveCpX: 450,  // Toạ độ X điểm uốn
+  curveCpY: 670,  // Toạ độ Y điểm uốn (tạo độ võng)
 
   imageX: 55,
   imageY: 35,
@@ -35,7 +37,7 @@ export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [price, setPrice] = useState("2199k");
   const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
-  const [studioName, setStudioName] = useState(""); // Ẩn bớt nếu gói newborn không có dòng thứ 3
+  const [studioName, setStudioName] = useState("");
 
   const [serviceItems, setServiceItems] = useState([
     "Chụp ngay tại nhà",
@@ -54,26 +56,34 @@ export default function PosterEditorTool() {
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
-  const [themeColor, setThemeColor] = useState("#628b55"); // Màu xanh lá giống mẫu
+  const [themeColor, setThemeColor] = useState("#628b55");
   const [borderColor, setBorderColor] = useState("#628b55");
-  const [textColor, setTextColor] = useState("#628b55"); // Chữ cũng màu xanh
-  const [cardColor, setCardColor] = useState("#fcf9f2"); // Màu nền card tiệp màu nền bg
+  const [textColor, setTextColor] = useState("#628b55");
+  const [cardColor, setCardColor] = useState("#fcf9f2");
 
   const [imageFit, setImageFit] = useState<FitMode>("cover");
   const [imageX, setImageX] = useState(50);
   const [imageY, setImageY] = useState(50);
 
-  const previewWrapRef = useRef<HTMLDivElement>(null);
+  // Responsive Refs
+  const measureRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     const resizePreview = () => {
-      if (!previewWrapRef.current) return;
-      setPreviewScale(Math.min(1, previewWrapRef.current.clientWidth / POSTER_W));
+      if (!measureRef.current) return;
+      // Đo chiều rộng chính xác của thẻ cha, trừ đi padding tự động tính scale
+      const availableWidth = measureRef.current.clientWidth;
+      setPreviewScale(Math.min(1, availableWidth / POSTER_W));
     };
 
+    // Gọi lần đầu và đăng ký event resize
     resizePreview();
     window.addEventListener("resize", resizePreview);
+    
+    // Đảm bảo font load xong để tính toán scale lại nếu cần
+    document.fonts.ready.then(resizePreview);
+
     return () => window.removeEventListener("resize", resizePreview);
   }, []);
 
@@ -130,7 +140,6 @@ export default function PosterEditorTool() {
   };
 
   const downloadPNG = async () => {
-    // Đợi font load xong trước khi vẽ lên canvas để không bị lỗi font
     await document.fonts.ready;
 
     const canvas = document.createElement("canvas");
@@ -150,18 +159,17 @@ export default function PosterEditorTool() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-3 md:p-8 font-quicksand">
-      {/* Nạp Font Google để hiển thị chuẩn xác */}
+    <main className="min-h-screen bg-zinc-100 p-2 md:p-6 lg:p-8 font-quicksand overflow-x-hidden">
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&display=swap');
         .font-cursive { font-family: 'Dancing Script', cursive; }
         .font-quicksand { font-family: 'Quicksand', sans-serif; }
       `}} />
 
-      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
-        <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5">
+      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[430px_1fr]">
+        <section className="rounded-2xl bg-white p-4 shadow-sm md:p-5 h-fit">
           <h1 className="text-2xl font-bold text-zinc-900 font-quicksand">Poster Editor</h1>
-          <p className="mt-1 text-sm text-zinc-500">Upload ảnh, chỉnh font chữ không lỗi, căn ảnh rồi xuất PNG.</p>
+          <p className="mt-1 text-sm text-zinc-500">Tự động bo góc đường cong, scale mượt trên điện thoại.</p>
 
           <div className="mt-5 space-y-4 font-quicksand">
             <label className="block">
@@ -240,19 +248,25 @@ export default function PosterEditorTool() {
           </div>
         </section>
 
-        <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4">
-          <div className="mb-3 text-sm text-zinc-500">
-            Preview tỷ lệ 2:3 giống mẫu. Trữ không đè nhau.
+        {/* Khung chứa Preview có cơ chế Responsive hoàn hảo */}
+        <section className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center">
+          <div className="mb-3 text-sm text-zinc-500 w-full text-center">
+            Preview tỷ lệ 2:3. Đã tự động thu nhỏ vừa khít với màn hình của bạn.
           </div>
+          
+          {/* Div ẩn này dùng để đo đạc chiều rộng tối đa mà container cho phép */}
+          <div ref={measureRef} className="w-full h-0" />
 
+          {/* Box chứa Poster đã được scale */}
           <div
-            className="mx-auto"
+            className="relative transition-all duration-200 ease-out"
             style={{
               width: POSTER_W * previewScale,
               height: POSTER_H * previewScale,
             }}
           >
             <div
+              className="absolute left-0 top-0 shadow-lg border border-zinc-100"
               style={{
                 width: POSTER_W,
                 height: POSTER_H,
@@ -299,16 +313,22 @@ function PosterPreview(data: PosterData) {
     : {};
 
   return (
-    <div className="relative h-[1536px] w-[1024px] overflow-hidden font-quicksand" style={{ backgroundColor: L.bg }}>
-      {/* Nền xanh cắt xéo góc giống mẫu mới */}
-      <div 
+    <div className="relative h-full w-full overflow-hidden font-quicksand" style={{ backgroundColor: L.bg }}>
+      
+      {/* Nền xanh uốn cong bằng SVG Path */}
+      <svg 
         className="absolute inset-x-0 top-0" 
-        style={{ 
-          backgroundColor: data.themeColor,
-          height: L.topH_left,
-          clipPath: `polygon(0 0, 100% 0, 100% ${L.topH_right}px, 0 100%)`
-        }} 
-      />
+        width={POSTER_W} 
+        height={L.curveLY + 50} 
+        viewBox={`0 0 ${POSTER_W} ${L.curveLY + 50}`} 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path 
+          d={`M0 0 H${POSTER_W} V${L.curveRY} Q${L.curveCpX} ${L.curveCpY} 0 ${L.curveLY} Z`} 
+          fill={data.themeColor} 
+        />
+      </svg>
 
       {/* Ảnh chính */}
       <div
@@ -388,13 +408,13 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, POSTER_W, POSTER_H);
 
-  // Vẽ đa giác nền cắt xéo
+  // Vẽ đường cong nền cắt xéo
   ctx.fillStyle = data.themeColor;
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo(POSTER_W, 0);
-  ctx.lineTo(POSTER_W, L.topH_right);
-  ctx.lineTo(0, L.topH_left);
+  ctx.lineTo(POSTER_W, L.curveRY); // Điểm Neo Phải
+  ctx.quadraticCurveTo(L.curveCpX, L.curveCpY, 0, L.curveLY); // Đường uốn Bezier (Điểm điều khiển, Điểm Neo Trái)
   ctx.closePath();
   ctx.fill();
 
@@ -444,7 +464,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     ctx.fillText(data.studioName.toUpperCase(), POSTER_W / 2, L.cardY + 235);
   }
 
-  // Khởi tạo toạ độ y chuẩn
   let y = L.cardY + (data.studioName ? 300 : 260);
   y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, y, data.themeColor, data.textColor);
   y += 20; 
@@ -455,7 +474,6 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fillStyle = data.textColor;
   ctx.font = "600 26px 'Quicksand', sans-serif";
   
-  // Dùng text thay thế icon trong canvas
   ctx.fillStyle = data.themeColor;
   ctx.fillText(`📍`, POSTER_W / 2 - ctx.measureText(`  ${data.address}`).width / 2 - 10, 1450);
   ctx.fillStyle = data.textColor;
@@ -476,7 +494,6 @@ function drawCanvasSection(
 ) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  // Sủ dụng font chữ mềm mại (Cursive) cho tiêu đề giống mẫu
   ctx.font = "700 54px 'Dancing Script', cursive, sans-serif";
   ctx.fillText(title, x, y);
 
@@ -488,15 +505,13 @@ function drawCanvasSection(
     ctx.fillText("•", x, y);
 
     ctx.fillStyle = textColor;
-    // BẢN FIX QUAN TRỌNG: Gán y bằng giá trị trả về của wrapText để chống đè chữ
     y = wrapText(ctx, item, x + 30, y, 760, 42);
-    y += 8; // Khoảng cách giãn giữa các gạch đầu dòng
+    y += 8; 
   }
 
   return y;
 }
 
-// BẢN FIX: Hàm ngắt dòng đã cộng dồn lineHeight khi trả về Y để dòng sau không bị trùng
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -520,7 +535,6 @@ function wrapText(
   }
 
   ctx.fillText(line.trim(), x, y);
-  // Trả về toạ độ y của dòng TIẾP THEO (chính là mấu chốt chống lỗi đè font)
   return y + lineHeight; 
 }
 
