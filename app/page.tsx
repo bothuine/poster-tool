@@ -26,38 +26,37 @@ const L = {
 export default function PosterEditorTool() {
   const [photo, setPhoto] = useState<string | null>(null);
   
-  // Transform State cho Tương tác kéo/zoom ảnh
   const [imgTransform, setImgTransform] = useState({ x: 0, y: 0, scale: 1 });
 
-  const [price, setPrice] = useState("2199k");
-  const [packageTitle, setPackageTitle] = useState("SON NEWBORN");
-  const [studioName, setStudioName] = useState("SON STUDIO BABY & FAMILY");
+  const [price, setPrice] = useState("2299k");
+  const [packageTitle, setPackageTitle] = useState("Gói Chụp Thôi Nôi");
+  const [studioName, setStudioName] = useState("SON BABY STUDIO");
 
   const [serviceItems, setServiceItems] = useState([
-    "Chụp ngay tại nhà",
-    "2 Bối cảnh",
-    "Hỗ trợ toàn bộ trang phục và concept",
+    "Chụp tại Phim trường Son Studio",
+    "3 Bối cảnh chụp",
+    "Hỗ trợ 2 trang phục cho bé yêu và ba mẹ",
+    "Hỗ trợ chụp cùng ba mẹ",
   ]);
 
   const [productItems, setProductItems] = useState([
-    "11 Ảnh chỉnh sửa hoàn thiện",
-    "10 Ảnh in lụa size 13x18",
-    "1 Ảnh ép gỗ khung size 40x60",
-    "Trả toàn bộ file ảnh gốc Fullsize",
+    "11 ảnh chỉnh sửa hoàn thiện",
+    "10 ảnh in lụa 13x18cm",
+    "1 Ảnh gỗ 40x60cm",
+    "Trả toàn bộ ảnh chụp và ảnh chỉnh sửa full size",
+    "Album đựng ảnh 13x18",
   ]);
 
   const [address, setAddress] = useState("43 Quang Trung, Eakar (Đường 720)");
   const [facebook, setFacebook] = useState("Son Studio Baby & Family");
   const [phone, setPhone] = useState("0909 200 998");
 
-  // KHÔI PHỤC BẢNG MÀU ĐẦY ĐỦ
   const [themeColor, setThemeColor] = useState("#628b55");
   const [textColor, setTextColor] = useState("#628b55");
   const [borderColor, setBorderColor] = useState("#628b55");
   const [cardColor, setCardColor] = useState("#fcf9f2");
   const [imageBorderColor, setImageBorderColor] = useState("#ffffff");
 
-  // States mảng màu
   const [bgBottomShape, setBgBottomShape] = useState<BgBottomShape>("curved");
   const [shapeHeight, setShapeHeight] = useState(620); 
   const [shapeIntensity, setShapeIntensity] = useState(70);
@@ -100,16 +99,18 @@ export default function PosterEditorTool() {
     const file = e.target.files?.[0];
     if (file) {
       setPhoto(URL.createObjectURL(file));
-      setImgTransform({ x: 0, y: 0, scale: 1 }); // Reset vị trí khi up ảnh mới
+      setImgTransform({ x: 0, y: 0, scale: 1 }); 
     }
   }
 
   return (
     <main className="min-h-screen bg-zinc-100 p-3 md:p-8 font-quicksand">
+      {/* Đã thêm font Fredoka cho phần giá và tên gói */}
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;600;700;800;900&family=Fredoka:wght@600;700&display=swap');
         .font-cursive { font-family: 'Dancing Script', cursive; }
         .font-quicksand { font-family: 'Quicksand', sans-serif; }
+        .font-cute { font-family: 'Fredoka', sans-serif; }
       `}} />
 
       <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[430px_1fr]">
@@ -157,7 +158,6 @@ export default function PosterEditorTool() {
               </div>
             </label>
 
-            {/* BẢNG MÀU CHUYÊN SÂU */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-xl border border-zinc-200 p-4 bg-zinc-50/50">
               <div className="col-span-2 text-sm font-bold text-zinc-700 mb-1">MÀU SẮC CHỦ ĐẠO</div>
               <ColorInput label="Màu tổng thể" value={themeColor} onChange={setThemeColor} />
@@ -170,6 +170,7 @@ export default function PosterEditorTool() {
 
             <Input label="Giá tiền" value={price} onChange={setPrice} />
             <Input label="Tên gói" value={packageTitle} onChange={setPackageTitle} />
+            <Input label="Tên Studio (phụ)" value={studioName} onChange={setStudioName} />
 
             <EditableList title="Dịch vụ" items={serviceItems} setItems={setServiceItems} />
             <EditableList title="Sản phẩm" items={productItems} setItems={setProductItems} />
@@ -188,7 +189,6 @@ export default function PosterEditorTool() {
           </div>
         </section>
 
-        {/* KHU VỰC PREVIEW */}
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4 overflow-hidden flex flex-col items-center justify-start">
           <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Xem trước (Kéo thả & Zoom)</div>
           <div
@@ -239,8 +239,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   const dragStartPos = useRef({ x: 0, y: 0 });
   const dragStartTransform = useRef({ x: 0, y: 0 });
   const imgBoxRef = useRef<HTMLDivElement>(null);
-  
-  // Lưu giữ kích thước tự nhiên của ảnh để tính toán render
   const [imgSize, setImgSize] = useState({ w: L.imageW, h: L.imageH });
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -288,7 +286,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     }
   };
 
-  // Tính toán kích thước render để ảnh che phủ toàn bộ Box trước khi scale/translate (Bản chất của object-fit: cover)
   const baseScale = Math.max(L.imageW / imgSize.w, L.imageH / imgSize.h);
   const renderW = imgSize.w * baseScale * data.imgTransform.scale;
   const renderH = imgSize.h * baseScale * data.imgTransform.scale;
@@ -301,7 +298,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
 
       <div 
         ref={imgBoxRef}
-        // Thêm Box Shadow CSS cho HTML Preview
         className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-[0_15px_30px_rgba(0,0,0,0.25)] group touch-none"
         style={{ 
           left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab',
@@ -315,7 +311,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
           </div>
         ) : (
           <>
-            {/* ẢNH ĐƯỢC GIẢ LẬP THEO SIZE THẬT, KHÔNG DÙNG OBJECT-FIT COVER */}
             <img 
               src={data.photo} 
               draggable={false} 
@@ -327,7 +322,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
                 height: renderH, 
                 objectFit: 'fill',
                 pointerEvents: 'none',
-                // Translate sẽ di chuyển từ tâm ra + kết hợp x/y của user
                 transform: `translate(calc(-50% + ${data.imgTransform.x}px), calc(-50% + ${data.imgTransform.y}px))`,
             }}/>
             <div className="absolute top-4 right-4 flex gap-2 z-50 bg-black/50 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition shadow-lg">
@@ -350,10 +344,14 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         }}
       >
         <div className="text-center">
-          <div className="text-[82px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
-          <div className="mt-2 text-[54px] font-black leading-tight uppercase" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+          {/* Đã áp dụng font-cute (Fredoka) và bỏ hiệu ứng uppercase */}
+          <div className="text-[86px] font-bold leading-none font-cute tracking-wide" style={{ color: data.themeColor }}>{data.price}</div>
+          <div className="mt-1 text-[58px] font-bold leading-tight font-cute" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+          {data.studioName && (
+            <div className="mt-3 text-[26px] font-bold uppercase tracking-widest text-zinc-600" style={{ color: data.themeColor }}>{data.studioName}</div>
+          )}
         </div>
-        <div className="mt-8 flex flex-col gap-6">
+        <div className="mt-6 flex flex-col gap-6">
           <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
           <PosterSection title="Sản phẩm:" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
         </div>
@@ -371,7 +369,6 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   );
 }
 
-// XUẤT CANVAS KHỚP 100% HIỂU ỨNG TRANSFORM CỦA HTML
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
   const h = POSTER_H;
@@ -399,20 +396,17 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.fill();
   ctx.restore();
 
-  // VẼ ẢNH KÈM SHADOW & BORDER
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   
-  // Tích hợp Shadow cho Ảnh
   ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
   ctx.shadowBlur = 30;
   ctx.shadowOffsetY = 15;
   ctx.fillStyle = "#f3efe4";
-  ctx.fill(); // Vẽ bóng trước
+  ctx.fill(); 
 
-  // Reset shadow trước khi clip và vẽ ảnh
   ctx.shadowColor = "transparent";
-  ctx.clip(); // Giới hạn khu vực vẽ ảnh
+  ctx.clip(); 
   
   if (data.photo) {
     const img = await loadImage(data.photo);
@@ -424,40 +418,43 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
     ctx.drawImage(img, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
   }
 
-  // Vẽ Border Ảnh (Bên trong clip path nên nhân đôi độ dày)
-  ctx.lineWidth = 12; // Viền thực tế hiển thị sẽ là 6px
+  ctx.lineWidth = 12; 
   ctx.strokeStyle = data.imageBorderColor;
   ctx.stroke();
   ctx.restore();
 
-  // VẼ KHUNG CARD KÈM SHADOW & BORDER
   ctx.save();
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   
-  // Shadow cho Thẻ nội dung
   ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
   ctx.shadowBlur = 20;
   ctx.shadowOffsetY = 10;
   
   ctx.fillStyle = data.cardColor; 
-  ctx.fill(); // Vẽ nền thẻ và bóng
+  ctx.fill(); 
   
-  // Tắt bóng trước khi viền và viết chữ
   ctx.shadowColor = "transparent";
   ctx.lineWidth = 5; 
   ctx.strokeStyle = data.borderColor; 
   ctx.stroke();
   ctx.restore();
 
-  // Vẽ Chữ
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  ctx.font = "900 82px 'Quicksand', sans-serif";
+  
+  // Áp dụng Font Fredoka, không chuyển Uppercase cho Title
+  ctx.font = "700 86px 'Fredoka', sans-serif";
   ctx.fillText(data.price, w/2, L.cardY + 115);
-  ctx.font = "900 54px 'Quicksand', sans-serif";
-  ctx.fillText(data.packageTitle.toUpperCase(), w/2, L.cardY + 185);
+  
+  ctx.font = "700 58px 'Fredoka', sans-serif";
+  ctx.fillText(data.packageTitle, w/2, L.cardY + 185);
 
-  let textY = L.cardY + 280;
+  if (data.studioName) {
+    ctx.font = "700 26px 'Quicksand', sans-serif";
+    ctx.fillText(data.studioName.toUpperCase(), w/2, L.cardY + 235);
+  }
+
+  let textY = L.cardY + (data.studioName ? 290 : 250);
   textY = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 60, textY, data.themeColor, data.textColor);
   textY += 20; 
   drawCanvasSection(ctx, "Sản phẩm:", data.productItems, L.cardX + 60, textY, data.themeColor, data.textColor);
