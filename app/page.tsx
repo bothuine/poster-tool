@@ -239,6 +239,9 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   const dragStartPos = useRef({ x: 0, y: 0 });
   const dragStartTransform = useRef({ x: 0, y: 0 });
   const imgBoxRef = useRef<HTMLDivElement>(null);
+  
+  // Lưu giữ kích thước tự nhiên của ảnh để tính toán render
+  const [imgSize, setImgSize] = useState({ w: L.imageW, h: L.imageH });
 
   const onPointerDown = (e: React.PointerEvent) => {
     isDragging.current = true;
@@ -285,6 +288,11 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
     }
   };
 
+  // Tính toán kích thước render để ảnh che phủ toàn bộ Box trước khi scale/translate (Bản chất của object-fit: cover)
+  const baseScale = Math.max(L.imageW / imgSize.w, L.imageH / imgSize.h);
+  const renderW = imgSize.w * baseScale * data.imgTransform.scale;
+  const renderH = imgSize.h * baseScale * data.imgTransform.scale;
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#fcf9f2] font-quicksand">
       <svg className="absolute inset-x-0 top-0" width={POSTER_W} height={data.shapeHeight + 300}>
@@ -297,7 +305,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
         className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-[0_15px_30px_rgba(0,0,0,0.25)] group touch-none"
         style={{ 
           left: L.imageX, top: L.imageY, width: L.imageW, height: L.imageH, cursor: 'grab',
-          borderWidth: '6px', borderColor: data.imageBorderColor // Viền cho ảnh
+          borderWidth: '6px', borderColor: data.imageBorderColor
         }}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
       >
@@ -307,9 +315,20 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
           </div>
         ) : (
           <>
-            <img src={data.photo} draggable={false} style={{
-                position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none',
-                transform: `translate(${data.imgTransform.x}px, ${data.imgTransform.y}px) scale(${data.imgTransform.scale})`,
+            {/* ẢNH ĐƯỢC GIẢ LẬP THEO SIZE THẬT, KHÔNG DÙNG OBJECT-FIT COVER */}
+            <img 
+              src={data.photo} 
+              draggable={false} 
+              onLoad={(e) => setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+              style={{
+                position: 'absolute', 
+                left: '50%', top: '50%',
+                width: renderW, 
+                height: renderH, 
+                objectFit: 'fill',
+                pointerEvents: 'none',
+                // Translate sẽ di chuyển từ tâm ra + kết hợp x/y của user
+                transform: `translate(calc(-50% + ${data.imgTransform.x}px), calc(-50% + ${data.imgTransform.y}px))`,
             }}/>
             <div className="absolute top-4 right-4 flex gap-2 z-50 bg-black/50 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition shadow-lg">
               <button title="Phóng to" className="hover:text-green-300" onClick={(e) => { e.stopPropagation(); setImgTransform(p => ({...p, scale: p.scale + 0.1})); }}><ZoomIn size={22}/></button>
@@ -352,7 +371,7 @@ function PosterPreview({ data, setImgTransform, previewScale }: {
   );
 }
 
-// BẢN FIX: THÊM SHADOW VÀ BORDER KHI XUẤT CANVAS
+// XUẤT CANVAS KHỚP 100% HIỂU ỨNG TRANSFORM CỦA HTML
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   const w = POSTER_W;
   const h = POSTER_H;
