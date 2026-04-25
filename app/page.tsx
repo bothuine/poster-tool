@@ -1,36 +1,31 @@
-
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
-import { Download, ImagePlus, Plus, Trash2, Palette } from "lucide-react";
+import { Download, ImagePlus, Plus, Trash2, Palette, MapPin, Facebook, Phone } from "lucide-react";
 
 type SetList = React.Dispatch<React.SetStateAction<string[]>>;
 type FitMode = "cover" | "contain";
 
-// Đổi lại đúng tỉ lệ poster mẫu: 2:3
-// Bản trước dùng 800x1120 nên quá thấp, nội dung bị ép và nhìn rất gớm.
+// Kích thước chuẩn tỷ lệ 2:3
 const POSTER_W = 1024;
 const POSTER_H = 1536;
 
+// Cấu trúc lại toàn bộ Layout để vừa vặn, không bị tràn chữ
 const L = {
   bg: "#f9f4e8",
+  topH: 580, // Chiều cao mảng xanh lá bên trên
 
-  topH: 610,
-
-  imageX: 70,
-  imageY: 28,
-  imageW: 884,
-  imageH: 560,
+  imageX: 55,
+  imageY: 35,
+  imageW: 914,
+  imageH: 540,
   imageR: 42,
 
   cardX: 55,
-  cardY: 660,
+  cardY: 600, // Đẩy card lên một chút
   cardW: 914,
-  cardH: 725,
+  cardH: 810, // Tăng chiều cao card để chứa đủ 2 list Dịch vụ và Sản phẩm
   cardR: 44,
-
-  footerY1: 1460,
-  footerY2: 1502,
 };
 
 export default function PosterEditorTool() {
@@ -241,7 +236,7 @@ export default function PosterEditorTool() {
 
         <section ref={previewWrapRef} className="rounded-2xl bg-white p-3 shadow-sm md:p-4">
           <div className="mb-3 text-sm text-zinc-500">
-            Preview tỉ lệ 2:3 giống mẫu. File xuất không méo ảnh.
+            Preview tỷ lệ 2:3 giống mẫu. File xuất không méo ảnh.
           </div>
 
           <div
@@ -299,8 +294,8 @@ function PosterPreview(data: PosterData) {
 
   return (
     <div className="relative h-[1536px] w-[1024px] overflow-hidden bg-[#f9f4e8]">
-      <div className="absolute inset-x-0 top-0 h-[610px]" style={{ backgroundColor: data.themeColor }} />
-      <div className="absolute -left-[145px] top-[556px] h-[180px] w-[560px] rotate-[-18deg] bg-[#f9f4e8]" />
+      <div className="absolute inset-x-0 top-0 h-[580px]" style={{ backgroundColor: data.themeColor }} />
+      <div className="absolute -left-[145px] top-[530px] h-[180px] w-[560px] rotate-[-18deg] bg-[#f9f4e8]" />
 
       <div
         className="absolute z-10 overflow-hidden rounded-[42px] bg-[#f3efe4] shadow-sm"
@@ -320,7 +315,7 @@ function PosterPreview(data: PosterData) {
       </div>
 
       <div
-        className="absolute z-10 rounded-[44px] border-[6px] px-[76px] py-[44px]"
+        className="absolute z-10 overflow-hidden rounded-[44px] border-[6px] shadow-sm"
         style={{
           left: L.cardX,
           top: L.cardY,
@@ -330,22 +325,39 @@ function PosterPreview(data: PosterData) {
           backgroundColor: data.cardColor,
         }}
       >
-        <div className="text-center">
-          <div className="text-[72px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
-          <div className="mt-1 text-[46px] font-black leading-tight" style={{ color: data.themeColor }}>{data.packageTitle}</div>
-          <div className="mt-6 text-[30px] font-black uppercase tracking-wide" style={{ color: data.themeColor }}>{data.studioName}</div>
-        </div>
+        <div className="flex h-full flex-col px-[64px] py-[50px]">
+          <div className="text-center">
+            <div className="text-[72px] font-black leading-none" style={{ color: data.themeColor }}>{data.price}</div>
+            <div className="mt-2 text-[46px] font-black leading-tight" style={{ color: data.themeColor }}>{data.packageTitle}</div>
+            <div className="mt-4 text-[28px] font-black uppercase tracking-wide" style={{ color: data.themeColor }}>{data.studioName}</div>
+          </div>
 
-        <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
-        <PosterSection title="Sản phẩm" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
+          <div className="mt-10 flex flex-col gap-6">
+            <PosterSection title="Dịch vụ:" color={data.themeColor} textColor={data.textColor} items={data.serviceItems} />
+            <PosterSection title="Sản phẩm" color={data.themeColor} textColor={data.textColor} items={data.productItems} />
+          </div>
+        </div>
       </div>
 
       <div
-        className="absolute left-0 right-0 z-20 text-center text-[28px] font-medium leading-snug"
-        style={{ top: 1438, color: data.themeColor }}
+        className="absolute left-0 right-0 z-20 flex flex-col items-center text-[26px] font-medium leading-snug"
+        style={{ top: 1445, color: data.themeColor }}
       >
-        <div>📍 {data.address}</div>
-        <div className="mt-3">f&nbsp; {data.facebook} &nbsp; | &nbsp; ☎ {data.phone}</div>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-6 w-6" strokeWidth={2.5} />
+          <span>{data.address}</span>
+        </div>
+        <div className="mt-3 flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Facebook className="h-6 w-6" strokeWidth={2.5} />
+            <span>{data.facebook}</span>
+          </div>
+          <div className="text-zinc-400">|</div>
+          <div className="flex items-center gap-2">
+            <Phone className="h-6 w-6" strokeWidth={2.5} />
+            <span>{data.phone}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -354,19 +366,23 @@ function PosterPreview(data: PosterData) {
 async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData) {
   ctx.clearRect(0, 0, POSTER_W, POSTER_H);
 
+  // Background
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, POSTER_W, POSTER_H);
 
+  // Top header color
   ctx.fillStyle = data.themeColor;
   ctx.fillRect(0, 0, POSTER_W, L.topH);
 
+  // Slant line
   ctx.save();
-  ctx.translate(-145, 556);
+  ctx.translate(-145, 530);
   ctx.rotate((-18 * Math.PI) / 180);
   ctx.fillStyle = L.bg;
   ctx.fillRect(0, 0, 560, 180);
   ctx.restore();
 
+  // Draw main image
   ctx.save();
   roundRect(ctx, L.imageX, L.imageY, L.imageW, L.imageH, L.imageR);
   ctx.clip();
@@ -390,6 +406,7 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
 
   ctx.restore();
 
+  // Draw card
   roundRect(ctx, L.cardX, L.cardY, L.cardW, L.cardH, L.cardR);
   ctx.fillStyle = data.cardColor;
   ctx.fill();
@@ -397,28 +414,30 @@ async function drawPosterCanvas(ctx: CanvasRenderingContext2D, data: PosterData)
   ctx.strokeStyle = data.borderColor;
   ctx.stroke();
 
+  // Draw card content (Synced perfectly with HTML preview math)
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
 
   ctx.font = "900 72px Arial, sans-serif";
-  ctx.fillText(data.price, POSTER_W / 2, 760);
+  ctx.fillText(data.price, POSTER_W / 2, L.cardY + 110);
 
   ctx.font = "900 46px Arial, sans-serif";
-  ctx.fillText(data.packageTitle, POSTER_W / 2, 820);
+  ctx.fillText(data.packageTitle, POSTER_W / 2, L.cardY + 175);
 
-  ctx.font = "900 30px Arial, sans-serif";
-  ctx.fillText(data.studioName.toUpperCase(), POSTER_W / 2, 895);
+  ctx.font = "900 28px Arial, sans-serif";
+  ctx.fillText(data.studioName.toUpperCase(), POSTER_W / 2, L.cardY + 230);
 
-  let y = 965;
-  y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, 128, y, data.themeColor, data.textColor);
-  y += 20;
-  drawCanvasSection(ctx, "Sản phẩm", data.productItems, 128, y, data.themeColor, data.textColor);
+  let y = L.cardY + 310;
+  y = drawCanvasSection(ctx, "Dịch vụ:", data.serviceItems, L.cardX + 70, y, data.themeColor, data.textColor);
+  y += 35;
+  drawCanvasSection(ctx, "Sản phẩm", data.productItems, L.cardX + 70, y, data.themeColor, data.textColor);
 
+  // Draw Footer
   ctx.textAlign = "center";
   ctx.fillStyle = data.themeColor;
-  ctx.font = "500 28px Arial, sans-serif";
-  ctx.fillText(`📍 ${data.address}`, POSTER_W / 2, 1470);
-  ctx.fillText(`f  ${data.facebook}   |   ☎  ${data.phone}`, POSTER_W / 2, 1512);
+  ctx.font = "500 26px Arial, sans-serif";
+  ctx.fillText(`📍  ${data.address}`, POSTER_W / 2, 1470);
+  ctx.fillText(`f   ${data.facebook}    |    ☎   ${data.phone}`, POSTER_W / 2, 1515);
 }
 
 function drawCanvasSection(
@@ -432,18 +451,18 @@ function drawCanvasSection(
 ) {
   ctx.textAlign = "left";
   ctx.fillStyle = color;
-  ctx.font = "900 40px Arial, sans-serif";
+  ctx.font = "900 36px Arial, sans-serif";
   ctx.fillText(title, x, y);
 
-  y += 42;
-  ctx.font = "800 29px Arial, sans-serif";
+  y += 40;
+  ctx.font = "800 26px Arial, sans-serif";
 
   for (const item of items) {
     ctx.fillStyle = color;
     ctx.fillText("•", x, y);
 
     ctx.fillStyle = textColor;
-    y = wrapText(ctx, item, x + 38, y, 750, 34);
+    y = wrapText(ctx, item, x + 35, y, 750, 34);
     y += 8;
   }
 
@@ -576,11 +595,11 @@ function PosterSection({
   items: string[];
 }) {
   return (
-    <div className="mt-8">
-      <h2 className="text-[40px] font-black leading-tight" style={{ color }}>{title}</h2>
-      <ul className="mt-3 space-y-2 text-[29px] font-extrabold leading-snug" style={{ color: textColor }}>
+    <div className="text-left">
+      <h2 className="text-[36px] font-black leading-tight" style={{ color }}>{title}</h2>
+      <ul className="mt-3 space-y-2 text-[26px] font-extrabold leading-snug" style={{ color: textColor }}>
         {items.map((item, idx) => (
-          <li key={idx} className="flex gap-4">
+          <li key={idx} className="flex gap-3">
             <span style={{ color }}>•</span>
             <span>{item}</span>
           </li>
